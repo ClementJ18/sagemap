@@ -1,0 +1,169 @@
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+from .misc import Team
+
+if TYPE_CHECKING:
+    from ..context import ParsingContext
+    
+@dataclass
+class BuildListInfo:
+    build_name: str
+    template_name: str
+    location: tuple[float, float, float]
+    angle: float
+    is_initially_built: bool
+    num_rebuilds: int
+    script: str
+    health: int
+    whiner: bool
+    unsellable: bool
+    repairable: bool
+    unknown: bool | None = None
+    
+    @classmethod
+    def parse(cls, context: "ParsingContext", version: int, has_asset_list: bool):
+        build_name = context.stream.readUInt16PrefixedAsciiString()
+        template_name = context.stream.readUInt16PrefixedAsciiString()
+        location = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+        angle = context.stream.readFloat()
+        is_initially_built = context.stream.readBool()
+
+        unknown = None
+        if version >= 6 and has_asset_list:
+            unknown = context.stream.readBool()
+
+        num_rebuilds = context.stream.readUInt32()
+        script = context.stream.readUInt16PrefixedAsciiString()
+        health = context.stream.readInt32()
+        whiner = context.stream.readBool()
+        unsellable = context.stream.readBool()
+        repairable = context.stream.readBool()
+
+        context.logger.debug(f"BuildListItem: {build_name}, Template: {template_name}, Health: {health}")
+        
+        return cls(
+            build_name=build_name,
+            template_name=template_name,
+            location=location,
+            angle=angle,
+            is_initially_built=is_initially_built,
+            num_rebuilds=num_rebuilds,
+            script=script,
+            health=health,
+            whiner=whiner,
+            unsellable=unsellable,
+            repairable=repairable,
+            unknown=unknown
+        )
+    
+@dataclass
+class BuildList:
+    asset_name = "BuildList"
+
+    faction_name: str
+    faction_name_property: tuple[int, str] | None
+    build_list: list[BuildListInfo]
+
+    @classmethod
+    def parse(cls, context: "ParsingContext", version: int, has_asset_list: bool):
+        
+        faction_name = None
+        faction_name_property = None
+        if has_asset_list:
+            faction_name = context.stream.readUInt16PrefixedAsciiString()
+        else:
+            faction_name_property = context.parse_asset_property_key()
+
+        
+        build_list = []
+        build_list_count = context.stream.readUInt32()
+        for _ in range(build_list_count):
+            build_list.append(BuildListInfo.parse(context, version, has_asset_list))
+
+        context.logger.debug(f"Parsed BuildList with {len(build_list)} items for faction '{faction_name or faction_name_property}'")
+        return cls(faction_name=faction_name, faction_name_property=faction_name_property, build_list=build_list)
+
+@dataclass
+class BuildLists:
+    asset_name = "BuildLists"
+
+    version: int
+    build_lists: list[BuildList]
+
+    @classmethod
+    def parse(cls, context: "ParsingContext", has_asset_list: bool):
+        version, _ = context.parse_asset_header()
+        build_list_count = context.stream.readUInt32()
+        build_lists = []
+        for _ in range(build_list_count):
+            item = BuildList.parse(context, version, has_asset_list)
+            build_lists.append(item)
+
+        context.logger.debug(f"Parsed Side with {len(build_lists)} build list items")
+        
+        return cls(version, build_lists)
+
+
+@dataclass
+class Player:
+    properties: dict
+    build_list_items: dict[str, BuildListInfo]
+    
+    @classmethod
+    def parse(cls, context: "ParsingContext", version: int, has_asset_list: bool):
+        properties = context.properties_to_dict(context.parse_properties())
+        
+        build_list_count = context.stream.readUInt32()
+        build_lists = {}
+        for _ in range(build_list_count):
+            item = BuildListInfo.parse(context, version, has_asset_list)
+            build_lists[item.build_name] = item
+
+        context.logger.debug(f"Parsed Side with {len(build_lists)} build list items")
+        
+        return cls(properties=properties, build_list_items=build_lists)
+
+
+@dataclass
+class SidesList:
+    asset_name = "SidesList"
+    
+    version: int
+    unknown1: bool
+    players: list[Player]
+    teams: list[Team] = field(default_factory=list)
+    
+    @classmethod
+    def parse(cls, context: "ParsingContext", has_asset_list: bool):
+        version, datasize = context.parse_asset_header()
+        end_pos = context.stream.base_stream.tell() + datasize
+        
+        unknown1 = False
+        if version >= 6:
+            unknown1 = context.stream.readBool()
+
+        player_count = context.stream.readUInt32()
+        players = []
+        for _ in range(player_count):
+            players.append(Player.parse(context, version, has_asset_list))
+
+        if version >= 5:
+            context.logger.debug(f"Parsed {len(players)} players in SidesList (v{version})")
+            return cls(version=version, unknown1=unknown1, players=players)
+        
+        teams = []
+        if version >= 2:
+            team_count = context.stream.readUInt32()
+            for _ in range(team_count):
+                teams.append(Team.parse(context))
+
+        while context.stream.base_stream.tell() < end_pos:
+            asset_name = context.parse_asset_name()
+            if asset_name == "Team":
+                raise ValueError("Unexpected Team asset in SidesList")
+            else:
+                raise ValueError(f"Unexpected asset in {cls.asset_name}: {asset_name}")
+        
+        context.logger.debug(f"Parsed {len(players)} players and {len(teams)} teams in SidesList (v{version})")
+        return cls(version=version, unknown1=unknown1, players=players, teams=teams)
