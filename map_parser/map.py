@@ -1,16 +1,40 @@
-
+from dataclasses import asdict, is_dataclass
+from enum import Enum, IntEnum
+import base64
 import io
 import logging
 
-from .assets import \
-    HeightMapData, WorldInfo, Teams, PlayerScriptsList, ObjectsList, MPPositionsList, SidesList, \
-    TriggerAreas, PolygonTriggers, WaypointsList, WaterSettings, SkippedAsset, BlendTileData, GlobalVersion, \
-    BuildLists, AssetList, StandingWaterAreas, StandingWaveAreas, RiverAreas, GlobalLighting, EnvironmentData, \
-    PostEffectsChunk, NamedCameras, CameraAnimationList, LibraryMapLists
+from reversebox.compression.compression_refpack import RefpackHandler
+
+from .assets import (
+    AssetList,
+    BlendTileData,
+    BuildLists,
+    CameraAnimationList,
+    EnvironmentData,
+    GlobalLighting,
+    GlobalVersion,
+    HeightMapData,
+    LibraryMapLists,
+    MPPositionsList,
+    NamedCameras,
+    ObjectsList,
+    PlayerScriptsList,
+    PolygonTriggers,
+    PostEffectsChunk,
+    RiverAreas,
+    SidesList,
+    SkippedAsset,
+    StandingWaterAreas,
+    StandingWaveAreas,
+    Teams,
+    TriggerAreas,
+    WaterSettings,
+    WaypointsList,
+    WorldInfo,
+)
 from .context import ParsingContext
 from .stream import BinaryStream
-
-from reversebox.compression.compression_refpack import RefpackHandler
 
 
 class Map:
@@ -21,7 +45,7 @@ class Map:
         self.asset_count = None
         self.assets = {}
 
-        #assets
+        # assets
         self.global_version = None
         self.height_map_data = None
         self.blend_tile_data = None
@@ -53,7 +77,7 @@ class Map:
             asset_name = self.context.parse_asset_name()
             self.context.logger.info(f"Processing asset: {asset_name}")
             self.parse_asset(asset_name)
-    
+
     def parse_asset(self, asset_name: str):
         if asset_name == AssetList.asset_name:
             self.asset_list = AssetList.parse(self.context)
@@ -71,7 +95,7 @@ class Map:
             # Global version is very boring, skip!
             self.global_version = GlobalVersion.parse(self.context, asset_name)
         elif asset_name == BlendTileData.asset_name:
-            #Quite complex, skip for now
+            # Quite complex, skip for now
             self.blend_tile_data = BlendTileData.parse(self.context, asset_name)
         elif asset_name == MPPositionsList.asset_name:
             self.mp_positions_list = MPPositionsList.parse(self.context)
@@ -109,22 +133,55 @@ class Map:
             self.context.logger.debug(f"Unknown asset: {asset_name}, skipping")
             self.skipped_assets[asset_name] = SkippedAsset.parse(self.context, asset_name)
 
+    def to_dict(self):
+        """Convert Map and all assets to a JSON-serializable dictionary"""
+        result = {}
+        
+        for key, value in self.__dict__.items():
+            if key == 'context':  # Skip the parsing context
+                continue
+            result[key] = self._serialize(value)
+        
+        return result
+    
+    def _serialize(self, obj):
+        """Recursively serialize objects to JSON-compatible types"""
+        if obj is None:
+            return None
+        elif isinstance(obj, bytes):
+            return base64.b64encode(obj).decode('ascii')
+        elif isinstance(obj, Enum):
+            return obj.value
+        elif is_dataclass(obj):
+            return {k: self._serialize(v) for k, v in asdict(obj).items()}
+        elif isinstance(obj, dict):
+            return {
+                (k.name if isinstance(k, Enum) else k): self._serialize(v) 
+                for k, v in obj.items()
+            }
+        elif isinstance(obj, (list, tuple)):
+            return [self._serialize(item) for item in obj]
+        else:
+            return obj
+
 
 def parse_map(path) -> Map:
     with open(path, "rb") as f:
         # skip ea refpack header
         ea_compression = f.read(8)
-        if not ea_compression.startswith(b'EAR'):
+        if not ea_compression.startswith(b"EAR"):
             f.seek(0)
 
         compressed_data = f.read()
-    
+
     try:
         decompressed_data = RefpackHandler().decompress_data(compressed_data)
     except Exception:
         decompressed_data = compressed_data
 
     logger = logging.getLogger("map_parser")
+    logger.setLevel(logging.INFO)
+
     stream = BinaryStream(io.BytesIO(decompressed_data))
     context = ParsingContext(stream)
     context.set_logger(logger)

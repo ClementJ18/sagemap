@@ -7,7 +7,6 @@ if TYPE_CHECKING:
 
 @dataclass
 class AssetListItem:
-
     type_id: int
     isntance_id: int
 
@@ -18,6 +17,7 @@ class AssetListItem:
 
         context.logger.debug(f"Parsed AssetListItem: Type ID: {type_id}, Instance ID: {instance_id}")
         return cls(type_id, instance_id)
+
 
 @dataclass
 class AssetList:

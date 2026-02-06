@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import enum
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -7,20 +7,21 @@ if TYPE_CHECKING:
 
 
 class TimeOfTheDay(enum.Enum):
-    Morning   = 1
+    Morning = 1
     Afternoon = 2
-    Evening   = 3
-    Night     = 4
+    Evening = 3
+    Night = 4
 
     def map_to_str(self) -> str:
         times = {
             TimeOfTheDay.Morning: "MORNING",
             TimeOfTheDay.Afternoon: "AFTERNOON",
             TimeOfTheDay.Evening: "EVENING",
-            TimeOfTheDay.Night: "NIGHT"
+            TimeOfTheDay.Night: "NIGHT",
         }
 
         return times[self]
+
 
 @dataclass
 class MapColorArgb:
@@ -39,6 +40,7 @@ class MapColorArgb:
 
         return cls(a=a, r=r, g=g, b=b)
 
+
 @dataclass
 class GlobalLight:
     ambient: tuple[float, float, float]
@@ -53,9 +55,9 @@ class GlobalLight:
 
         return cls(ambient, color, direction)
 
+
 @dataclass
 class GlobalLightingConfiguration:
-
     terrain_sun: GlobalLight
     object_sun: GlobalLight | None
     infantry_sun: GlobalLight | None
@@ -107,8 +109,9 @@ class GlobalLightingConfiguration:
             infantry_accent1=infantry_accent1,
             terrain_accent2=terrain_accent2,
             object_accent2=object_accent2,
-            infantry_accent2=infantry_accent2
+            infantry_accent2=infantry_accent2,
         )
+
 
 @dataclass
 class GlobalLighting:
@@ -146,7 +149,11 @@ class GlobalLighting:
 
         no_cloud_factor = None
         if version >= 8:
-            no_cloud_factor = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+            no_cloud_factor = (
+                context.stream.readFloat(),
+                context.stream.readFloat(),
+                context.stream.readFloat(),
+            )
 
         return cls(
             time_of_the_day=time,
@@ -155,5 +162,5 @@ class GlobalLighting:
             unknown=unknown,
             unknown2=unknown2,
             unknown3=unknown3,
-            no_cloud_factor=no_cloud_factor
+            no_cloud_factor=no_cloud_factor,
         )

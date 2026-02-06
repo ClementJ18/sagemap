@@ -27,7 +27,9 @@ class NamedCamera:
         fov = context.stream.readFloat()
         unknown = context.stream.readFloat()
 
-        context.logger.debug(f"NamedCamera: {name}, LookAt: {look_at_point}, Pitch: {pitch}, Roll: {roll}, Yaw: {yaw}, Zoom: {zoom}, FOV: {fov}")
+        context.logger.debug(
+            f"NamedCamera: {name}, LookAt: {look_at_point}, Pitch: {pitch}, Roll: {roll}, Yaw: {yaw}, Zoom: {zoom}, FOV: {fov}"
+        )
         return cls(
             look_at_point=look_at_point,
             name=name,
@@ -36,8 +38,9 @@ class NamedCamera:
             yaw=yaw,
             zoom=zoom,
             fov=fov,
-            unknown=unknown
+            unknown=unknown,
         )
+
 
 @dataclass
 class NamedCameras:

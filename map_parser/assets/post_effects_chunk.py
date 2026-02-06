@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..context import ParsingContext
 
+
 @dataclass
 class PostEffectParameter:
     name: str
     type: str
     value: float | tuple[float, float, float, float] | int | str
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext"):
         param_name = context.stream.readUInt16PrefixedAsciiString()
@@ -18,15 +19,23 @@ class PostEffectParameter:
         if param_type == "Float":
             data = context.stream.readFloat()
         elif param_type == "Float4":
-            data = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+            data = (
+                context.stream.readFloat(),
+                context.stream.readFloat(),
+                context.stream.readFloat(),
+                context.stream.readFloat(),
+            )
         elif param_type == "Int":
             data = context.stream.readInt32()
         elif param_type == "Texture":
             data = context.stream.readUInt16PrefixedAsciiString()
         else:
-            raise ValueError(f"Unknown effect parameter type '{param_type}' for parameter name '{param_name}'.")
-        
+            raise ValueError(
+                f"Unknown effect parameter type '{param_type}' for parameter name '{param_name}'."
+            )
+
         return cls(name=param_name, type=param_type, value=data)
+
 
 @dataclass
 class PostEffect:
@@ -50,7 +59,13 @@ class PostEffect:
             blend_factor = context.stream.readFloat()
             lookup_image = context.stream.readUInt16PrefixedAsciiString()
 
-        return cls(name=name, parameters=parameters if parameters else None, blend_factor=blend_factor, lookup_image=lookup_image)
+        return cls(
+            name=name,
+            parameters=parameters if parameters else None,
+            blend_factor=blend_factor,
+            lookup_image=lookup_image,
+        )
+
 
 @dataclass
 class PostEffectsChunk:
@@ -58,7 +73,7 @@ class PostEffectsChunk:
 
     version: int
     post_effects: list[PostEffect]
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext"):
         version, _ = context.parse_asset_header()
@@ -69,4 +84,3 @@ class PostEffectsChunk:
             post_effects.append(PostEffect.parse(context, version))
 
         return cls(version=version, post_effects=post_effects)
-

@@ -75,9 +75,30 @@ class PolygonTrigger:
         point_count = context.stream.readUInt32()
         points = []
         for _ in range(point_count):
-            points.append((context.stream.readInt32(), context.stream.readInt32(), context.stream.readInt32()))
+            points.append(
+                (context.stream.readInt32(), context.stream.readInt32(), context.stream.readInt32())
+            )
 
-        return cls(name, layer_name, trigger_id, is_water, is_river, river_start, river_texture, noise_texture, alpha_edge_texture, sparkle_texture, bump_map_texture, sky_texture, use_additive_blending, river_color, unknown, uv_scroll_speed, river_alpha, points)
+        return cls(
+            name,
+            layer_name,
+            trigger_id,
+            is_water,
+            is_river,
+            river_start,
+            river_texture,
+            noise_texture,
+            alpha_edge_texture,
+            sparkle_texture,
+            bump_map_texture,
+            sky_texture,
+            use_additive_blending,
+            river_color,
+            unknown,
+            uv_scroll_speed,
+            river_alpha,
+            points,
+        )
 
 
 @dataclass

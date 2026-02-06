@@ -2,8 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
-    from ..context import Property
+    from ..context import ParsingContext, Property
 
 
 @dataclass
@@ -26,7 +25,9 @@ class Object:
         type_name = context.stream.readUInt16PrefixedAsciiString()
         properties = context.properties_to_dict(context.parse_properties())
 
-        context.logger.debug(f"Object: Position: {position}, Angle: {angle}, Road Type: {road_type}, Type Name: {type_name}, Properties: {properties}")
+        context.logger.debug(
+            f"Object: Position: {position}, Angle: {angle}, Road Type: {road_type}, Type Name: {type_name}, Properties: {properties}"
+        )
         return cls(version, position, angle, road_type, type_name, properties)
 
 

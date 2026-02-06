@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..context import ParsingContext
 
+
 @dataclass
 class LibraryMaps:
     asset_name = "LibraryMaps"
@@ -14,7 +15,7 @@ class LibraryMaps:
     @classmethod
     def parse(cls, context: "ParsingContext"):
         version, _ = context.parse_asset_header()
-        
+
         values_count = context.stream.readUInt32()
         values = []
 

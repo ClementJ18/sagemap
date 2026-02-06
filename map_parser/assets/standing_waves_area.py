@@ -28,24 +28,23 @@ class StandingWaveArea:
     enable_pca_wave: bool | None
     wave_particle_fx_name: str | None
 
-
     @classmethod
     def parse(cls, context: "ParsingContext", version: int):
         unique_id = context.stream.readUInt32()
         name = context.stream.readUInt16PrefixedAsciiString()
         layer_name = context.stream.readUInt16PrefixedAsciiString()
-        uv_scroll_speed = context.stream.readSingle()
+        uv_scroll_speed = context.stream.readFloat()
         use_adaptive_blending = context.stream.readBool()
 
         point_count = context.stream.readUInt32()
         points = []
         for _ in range(point_count):
-            points.append((context.stream.readSingle(), context.stream.readSingle()))
+            points.append((context.stream.readFloat(), context.stream.readFloat()))
 
         unknown = context.stream.readUInt32()
         if unknown != 0:
             raise ValueError(f"Expected unknown field to be 0, got {unknown}")
-        
+
         final_width = None
         final_height = None
         initial_width_fraction = None
@@ -68,10 +67,9 @@ class StandingWaveArea:
             distance_from_shore = context.stream.readUInt32()
             texture = context.stream.readUInt16PrefixedAsciiString()
 
-
         enable_pca_wave = None
         if version == 2:
-            enable_pca_wave = context.stream.readBool()
+            enable_pca_wave = context.stream.readBoolUInt32()
 
         wave_particle_fx_name = None
         if version >= 4:
@@ -95,9 +93,8 @@ class StandingWaveArea:
             distance_from_shore=distance_from_shore,
             texture=texture,
             enable_pca_wave=enable_pca_wave,
-            wave_particle_fx_name=wave_particle_fx_name
+            wave_particle_fx_name=wave_particle_fx_name,
         )
-
 
 
 @dataclass
@@ -112,7 +109,7 @@ class StandingWaveAreas:
         version, _ = context.parse_asset_header()
         area_count = context.stream.readUInt32()
         areas = []
-        
+
         for _ in range(area_count):
             areas.append(StandingWaveArea.parse(context, version))
 

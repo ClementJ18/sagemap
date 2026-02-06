@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..context import ParsingContext
 
+
 @dataclass
 class EnvironmentData:
     asset_name = "EnvironmentData"

@@ -41,7 +41,7 @@ class RiverArea:
         unused_color_a = context.stream.readUChar()
         if unused_color_a != 0:
             raise ValueError(f"Expected unused color alpha to be 0, got {unused_color_a}")
-        
+
         alpha = context.stream.readSingle()
         water_height = context.stream.readUInt32()
 
@@ -55,7 +55,12 @@ class RiverArea:
         lines = []
 
         for _ in range(lines_count):
-            lines.append(((context.stream.readSingle(), context.stream.readSingle()), (context.stream.readSingle(), context.stream.readSingle())))
+            lines.append(
+                (
+                    (context.stream.readSingle(), context.stream.readSingle()),
+                    (context.stream.readSingle(), context.stream.readSingle()),
+                )
+            )
 
         return cls(
             unique_id=unique_id,
@@ -72,9 +77,9 @@ class RiverArea:
             water_height=water_height,
             river_type=river_type,
             minimum_water_lod=minimum_water_lod,
-            lines=lines
+            lines=lines,
         )
-        
+
 
 @dataclass
 class RiverAreas:
@@ -92,4 +97,3 @@ class RiverAreas:
             areas.append(RiverArea.parse(context, version))
 
         return cls(version, areas)
-

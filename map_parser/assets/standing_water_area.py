@@ -51,8 +51,9 @@ class StandingWaterArea:
             points=points,
             water_height=water_height,
             fx_shader=fx_shader,
-            depth_color=depth_color
+            depth_color=depth_color,
         )
+
 
 @dataclass
 class StandingWaterAreas:

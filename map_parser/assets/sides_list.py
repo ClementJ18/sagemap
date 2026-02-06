@@ -5,7 +5,8 @@ from .misc import Team
 
 if TYPE_CHECKING:
     from ..context import ParsingContext
-    
+
+
 @dataclass
 class BuildListInfo:
     build_name: str
@@ -20,7 +21,7 @@ class BuildListInfo:
     unsellable: bool
     repairable: bool
     unknown: bool | None = None
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext", version: int, has_asset_list: bool):
         build_name = context.stream.readUInt16PrefixedAsciiString()
@@ -41,7 +42,7 @@ class BuildListInfo:
         repairable = context.stream.readBool()
 
         context.logger.debug(f"BuildListItem: {build_name}, Template: {template_name}, Health: {health}")
-        
+
         return cls(
             build_name=build_name,
             template_name=template_name,
@@ -54,9 +55,10 @@ class BuildListInfo:
             whiner=whiner,
             unsellable=unsellable,
             repairable=repairable,
-            unknown=unknown
+            unknown=unknown,
         )
-    
+
+
 @dataclass
 class BuildList:
     asset_name = "BuildList"
@@ -67,7 +69,7 @@ class BuildList:
 
     @classmethod
     def parse(cls, context: "ParsingContext", version: int, has_asset_list: bool):
-        
+
         faction_name = None
         faction_name_property = None
         if has_asset_list:
@@ -75,14 +77,18 @@ class BuildList:
         else:
             faction_name_property = context.parse_asset_property_key()
 
-        
         build_list = []
         build_list_count = context.stream.readUInt32()
         for _ in range(build_list_count):
             build_list.append(BuildListInfo.parse(context, version, has_asset_list))
 
-        context.logger.debug(f"Parsed BuildList with {len(build_list)} items for faction '{faction_name or faction_name_property}'")
-        return cls(faction_name=faction_name, faction_name_property=faction_name_property, build_list=build_list)
+        context.logger.debug(
+            f"Parsed BuildList with {len(build_list)} items for faction '{faction_name or faction_name_property}'"
+        )
+        return cls(
+            faction_name=faction_name, faction_name_property=faction_name_property, build_list=build_list
+        )
+
 
 @dataclass
 class BuildLists:
@@ -101,7 +107,7 @@ class BuildLists:
             build_lists.append(item)
 
         context.logger.debug(f"Parsed Side with {len(build_lists)} build list items")
-        
+
         return cls(version, build_lists)
 
 
@@ -109,11 +115,11 @@ class BuildLists:
 class Player:
     properties: dict
     build_list_items: dict[str, BuildListInfo]
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext", version: int, has_asset_list: bool):
         properties = context.properties_to_dict(context.parse_properties())
-        
+
         build_list_count = context.stream.readUInt32()
         build_lists = {}
         for _ in range(build_list_count):
@@ -121,24 +127,24 @@ class Player:
             build_lists[item.build_name] = item
 
         context.logger.debug(f"Parsed Side with {len(build_lists)} build list items")
-        
+
         return cls(properties=properties, build_list_items=build_lists)
 
 
 @dataclass
 class SidesList:
     asset_name = "SidesList"
-    
+
     version: int
     unknown1: bool
     players: list[Player]
     teams: list[Team] = field(default_factory=list)
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext", has_asset_list: bool):
         version, datasize = context.parse_asset_header()
         end_pos = context.stream.base_stream.tell() + datasize
-        
+
         unknown1 = False
         if version >= 6:
             unknown1 = context.stream.readBool()
@@ -151,7 +157,7 @@ class SidesList:
         if version >= 5:
             context.logger.debug(f"Parsed {len(players)} players in SidesList (v{version})")
             return cls(version=version, unknown1=unknown1, players=players)
-        
+
         teams = []
         if version >= 2:
             team_count = context.stream.readUInt32()
@@ -164,6 +170,8 @@ class SidesList:
                 raise ValueError("Unexpected Team asset in SidesList")
             else:
                 raise ValueError(f"Unexpected asset in {cls.asset_name}: {asset_name}")
-        
-        context.logger.debug(f"Parsed {len(players)} players and {len(teams)} teams in SidesList (v{version})")
+
+        context.logger.debug(
+            f"Parsed {len(players)} players and {len(teams)} teams in SidesList (v{version})"
+        )
         return cls(version=version, unknown1=unknown1, players=players, teams=teams)

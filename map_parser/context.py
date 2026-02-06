@@ -1,16 +1,17 @@
-from enum import IntEnum
 import logging
+from enum import IntEnum
 from typing import TypedDict
+
 from .stream import BinaryStream
 
 
 class AssetPropertyType(IntEnum):
-    Boolean       = 0
-    Integer       = 1
-    RealNumber    = 2
-    AsciiString   = 3
+    Boolean = 0
+    Integer = 1
+    RealNumber = 2
+    AsciiString = 3
     UnicodeString = 4
-    Unknown       = 5
+    Unknown = 5
 
 
 class Property(TypedDict):
@@ -72,7 +73,9 @@ class ParsingContext:
         else:
             raise ValueError(f"Unexpected property type: {property_key_type}")
 
-        self.logger.debug(f"Property: {property_key_name} (Index: {property_key_name_index}), Type: {property_key_type.name}, Value: {value}")
+        self.logger.debug(
+            f"Property: {property_key_name} (Index: {property_key_name_index}), Type: {property_key_type.name}, Value: {value}"
+        )
         return (property_key_name, property_key_type, value)
 
     def parse_assets(self):

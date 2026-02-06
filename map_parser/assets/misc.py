@@ -2,8 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
-    from ..context import Property
+    from ..context import ParsingContext, Property
 
 
 @dataclass
@@ -75,7 +74,7 @@ class WaypointsList:
 @dataclass
 class Team:
     properties: dict[str, "Property"]
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext"):
         properties = context.properties_to_dict(context.parse_properties())
@@ -86,7 +85,7 @@ class Team:
 @dataclass
 class Teams:
     asset_name = "Teams"
-    
+
     version: int
     teams: list[Team]
 

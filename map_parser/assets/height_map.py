@@ -41,10 +41,7 @@ class HeightMapData:
                 x = context.stream.readUInt32()
                 y = context.stream.readUInt32()
 
-            borders.append({
-                "corner1": (corner1X, corner1Y),
-                "position": (x, y)
-            })
+            borders.append({"corner1": (corner1X, corner1Y), "position": (x, y)})
 
         area = context.stream.readUInt32()
         if area != width * height:
@@ -65,5 +62,7 @@ class HeightMapData:
                 if max_height is None or elevation > max_height:
                     max_height = elevation
 
-        context.logger.debug(f"HeightMapData: Width: {width}, Height: {height}, Border Width: {border_width}, Borders: {borders}, Area: {area}, Min Height: {min_height}, Max Height: {max_height}")
+        context.logger.debug(
+            f"HeightMapData: Width: {width}, Height: {height}, Border Width: {border_width}, Borders: {borders}, Area: {area}, Min Height: {min_height}, Max Height: {max_height}"
+        )
         return cls(version, width, height, border_width, borders, area, min_height, max_height, elevations)

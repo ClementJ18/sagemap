@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from ..context import ParsingContext
+
 
 @dataclass
 class ScriptArgument:
@@ -12,7 +12,7 @@ class ScriptArgument:
     float_value: float | None = None
     string_value: str | None = None
     position_value: tuple[float, float, float] | None = None
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext"):
         argument_type = context.stream.readUInt32()
@@ -20,9 +20,13 @@ class ScriptArgument:
         float_value = None
         string_value = None
         position_value = None
-        
+
         if argument_type == 16:  # Coordinate
-            position_value = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+            position_value = (
+                context.stream.readFloat(),
+                context.stream.readFloat(),
+                context.stream.readFloat(),
+            )
         else:
             int_value = context.stream.readInt32()
             float_value = context.stream.readFloat()
@@ -33,24 +37,31 @@ class ScriptArgument:
             int_value=int_value,
             float_value=float_value,
             string_value=string_value,
-            position_value=position_value
+            position_value=position_value,
         )
 
 
 @dataclass
 class ScriptDerived:
     """Base class for ScriptAction and Condition"""
+
     content_type: int
     internal_name: str | None
     arguments: list[ScriptArgument]
     is_enabled: bool | None
     is_inverted: bool | None
-    
+
     @classmethod
-    def parse(cls, context: "ParsingContext", has_internal_name_version: int, has_is_enabled_version: int, has_is_inverted: bool):
+    def parse(
+        cls,
+        context: "ParsingContext",
+        has_internal_name_version: int,
+        has_is_enabled_version: int,
+        has_is_inverted: bool,
+    ):
         asset_version, _ = context.parse_asset_header()
         content_type = context.stream.readUInt32()
-        
+
         internal_name = None
         if asset_version >= has_internal_name_version:
             internal_name = context.parse_asset_property_key()
@@ -73,20 +84,20 @@ class ScriptDerived:
             internal_name=internal_name,
             arguments=arguments,
             is_enabled=is_enabled,
-            is_inverted=is_inverted
+            is_inverted=is_inverted,
         )
 
 
 @dataclass
 class OrCondition:
     conditions: list[ScriptDerived]
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext"):
         conditions = []
         _, datasize = context.parse_asset_header()
         condition_end_pos = context.stream.base_stream.tell() + datasize
-        
+
         while context.stream.base_stream.tell() < condition_end_pos:
             asset_name = context.parse_asset_name()
             if asset_name != "Condition":
@@ -125,7 +136,7 @@ class Script:
     or_conditions: list[OrCondition] = field(default_factory=list)
     actions_if_true: list[ScriptDerived] = field(default_factory=list)
     actions_if_false: list[ScriptDerived] = field(default_factory=list)
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext"):
         asset_version, datasize = context.parse_asset_header()
@@ -181,7 +192,7 @@ class Script:
             unknown3 = context.stream.readUInt16()
             if unknown3 != 0:
                 raise ValueError("Invalid data in 'unknown3'")
-        
+
         or_conditions = []
         actions_if_true = []
         actions_if_false = []
@@ -195,7 +206,7 @@ class Script:
                 actions_if_false.append(ScriptDerived.parse(context, 2, 3, False))
             else:
                 raise ValueError(f"Unexpected asset in script: {asset_name}")
-        
+
         return cls(
             name=name,
             comment=comment,
@@ -220,7 +231,7 @@ class Script:
             unknown3=unknown3,
             or_conditions=or_conditions,
             actions_if_true=actions_if_true,
-            actions_if_false=actions_if_false
+            actions_if_false=actions_if_false,
         )
 
 
@@ -229,9 +240,9 @@ class ScriptGroup:
     name: str
     is_active: bool
     is_subroutine: bool
-    script_groups: dict[str, 'ScriptGroup'] = field(default_factory=dict)
+    script_groups: dict[str, "ScriptGroup"] = field(default_factory=dict)
     scripts: dict[str, Script] = field(default_factory=dict)
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext"):
         _, datasize = context.parse_asset_header()
@@ -239,12 +250,14 @@ class ScriptGroup:
         name = context.stream.readUInt16PrefixedAsciiString()
         is_active = context.stream.readBool()
         is_subroutine = context.stream.readBool()
-        
-        context.logger.debug(f"ScriptGroup: {name}, Current Pos: {context.stream.base_stream.tell()}, Group End Pos: {group_end_pos}")
-        
+
+        context.logger.debug(
+            f"ScriptGroup: {name}, Current Pos: {context.stream.base_stream.tell()}, Group End Pos: {group_end_pos}"
+        )
+
         script_groups = {}
         scripts = {}
-        
+
         while context.stream.base_stream.tell() < group_end_pos:
             nested_groups, nested_scripts = ScriptGroup.parse_script_list(context)
             script_groups.update(nested_groups)
@@ -255,11 +268,11 @@ class ScriptGroup:
             is_active=is_active,
             is_subroutine=is_subroutine,
             script_groups=script_groups,
-            scripts=scripts
+            scripts=scripts,
         )
-    
+
     @staticmethod
-    def parse_script_list(context: "ParsingContext") -> tuple[dict[str, 'ScriptGroup'], dict[str, Script]]:
+    def parse_script_list(context: "ParsingContext") -> tuple[dict[str, "ScriptGroup"], dict[str, Script]]:
         script_groups = {}
         scripts = {}
         asset_name = context.parse_asset_name()
@@ -272,7 +285,7 @@ class ScriptGroup:
             scripts[script.name] = script
         else:
             raise ValueError(f"Expected ScriptGroup or Script asset, got {asset_name}")
-        
+
         return script_groups, scripts
 
 
@@ -280,18 +293,18 @@ class ScriptGroup:
 class ScriptList:
     script_groups: dict[str, ScriptGroup]
     scripts: dict[str, Script]
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext"):
         asset_version, datasize = context.parse_asset_header()
         script_list_end_pos = context.stream.base_stream.tell() + datasize
-        
+
         if asset_version != 1:
             raise ValueError(f"Unexpected ScriptList version: {asset_version}")
 
         script_groups = {}
         scripts = {}
-        
+
         while context.stream.base_stream.tell() < script_list_end_pos:
             nested_groups, nested_scripts = ScriptGroup.parse_script_list(context)
             script_groups.update(nested_groups)
@@ -304,9 +317,9 @@ class ScriptList:
 @dataclass
 class PlayerScriptsList:
     asset_name = "PlayerScriptsList"
-    
+
     script_lists: list[ScriptList]
-    
+
     @classmethod
     def parse(cls, context: "ParsingContext"):
         _, datasize = context.parse_asset_header()
