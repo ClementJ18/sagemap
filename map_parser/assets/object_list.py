@@ -19,7 +19,7 @@ class Object:
     @classmethod
     def parse(cls, context: "ParsingContext"):
         with context.read_asset() as (version, _):
-            position = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+            position = context.stream.readVector3()
             angle = context.stream.readFloat()
             road_type = context.stream.readUInt32()
             type_name = context.stream.readUInt16PrefixedAsciiString()

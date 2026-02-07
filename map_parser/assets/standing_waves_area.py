@@ -39,7 +39,7 @@ class StandingWaveArea:
         point_count = context.stream.readUInt32()
         points = []
         for _ in range(point_count):
-            points.append((context.stream.readFloat(), context.stream.readFloat()))
+            points.append(context.stream.readVector2())
 
         unknown = context.stream.readUInt32()
         if unknown != 0:

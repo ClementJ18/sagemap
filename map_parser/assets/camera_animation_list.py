@@ -20,13 +20,8 @@ class FreeCameraAnimationCameraFrame:
         if interpolation_type not in ["catm", "line"]:
             raise ValueError(f"Invalid interpolation type: {interpolation_type}")
 
-        position = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
-        rotation = (
-            context.stream.readFloat(),
-            context.stream.readFloat(),
-            context.stream.readFloat(),
-            context.stream.readFloat(),
-        )
+        position = context.stream.readVector3()
+        rotation = context.stream.readVector4()
         fov = context.stream.readFloat()
 
         return cls(
@@ -65,7 +60,7 @@ class LookAtCameraAnimationLookAtFrame:
         if interpolation_type not in ["catm", "line"]:
             raise ValueError(f"Invalid interpolation type: {interpolation_type}")
 
-        look_at = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+        look_at = context.stream.readVector3()
 
         return cls(frame_index=frame_index, interpolation_type=interpolation_type, look_at_point=look_at)
 
@@ -85,7 +80,7 @@ class LookAtCameraAnimationCameraFrame:
         if interpolation_type not in ["catm", "line"]:
             raise ValueError(f"Invalid interpolation type: {interpolation_type}")
 
-        position = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+        position = context.stream.readVector3()
         roll = context.stream.readFloat()
         fov = context.stream.readFloat()
 

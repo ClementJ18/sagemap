@@ -23,7 +23,7 @@ class TriggerArea:
         point_count = context.stream.readUInt32()
         points = []
         for _ in range(point_count):
-            points.append((context.stream.readFloat(), context.stream.readFloat()))
+            points.append(context.stream.readVector2())
 
         unknown2 = context.stream.readUInt32()
         if unknown2 != 0:

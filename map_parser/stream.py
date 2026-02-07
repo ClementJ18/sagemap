@@ -98,6 +98,15 @@ class BinaryStream:
     def writeDouble(self, value: float):
         self.pack("d", value)
 
+    def readVector2(self) -> tuple[float, float]:
+        return (self.readFloat(), self.readFloat())
+
+    def readVector3(self) -> tuple[float, float, float]:
+        return (self.readFloat(), self.readFloat(), self.readFloat())
+
+    def readVector4(self) -> tuple[float, float, float, float]:
+        return (self.readFloat(), self.readFloat(), self.readFloat(), self.readFloat())
+
     def readString(self) -> str:
         length = self.readUChar()
         return self.unpack(str(length) + "s", length).decode(self.encoding)

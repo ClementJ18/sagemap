@@ -26,7 +26,7 @@ class BuildListInfo:
     def parse(cls, context: "ParsingContext", version: int, has_asset_list: bool):
         build_name = context.stream.readUInt16PrefixedAsciiString()
         template_name = context.stream.readUInt16PrefixedAsciiString()
-        location = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+        location = context.stream.readVector3()
         angle = context.stream.readFloat()
         is_initially_built = context.stream.readBool()
 

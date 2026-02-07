@@ -69,7 +69,7 @@ class PolygonTrigger:
             use_additive_blending = context.stream.readBool()
             river_color = (context.stream.readUChar(), context.stream.readUChar(), context.stream.readUChar())
             unknown = context.stream.readUChar()
-            uv_scroll_speed = (context.stream.readFloat(), context.stream.readFloat())
+            uv_scroll_speed = context.stream.readVector2()
             river_alpha = context.stream.readFloat()
 
         point_count = context.stream.readUInt32()

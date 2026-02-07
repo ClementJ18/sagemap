@@ -34,7 +34,7 @@ class StandingWaterArea:
         point_count = context.stream.readUInt32()
         points = []
         for _ in range(point_count):
-            points.append((context.stream.readSingle(), context.stream.readSingle()))
+            points.append(context.stream.readVector2())
 
         water_height = context.stream.readUInt32()
         fx_shader = context.stream.readUInt16PrefixedAsciiString()

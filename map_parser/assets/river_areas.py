@@ -55,12 +55,7 @@ class RiverArea:
         lines = []
 
         for _ in range(lines_count):
-            lines.append(
-                (
-                    (context.stream.readSingle(), context.stream.readSingle()),
-                    (context.stream.readSingle(), context.stream.readSingle()),
-                )
-            )
+            lines.append((context.stream.readVector2(), context.stream.readVector2()))
 
         return cls(
             unique_id=unique_id,

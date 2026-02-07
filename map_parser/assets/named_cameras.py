@@ -18,7 +18,7 @@ class NamedCamera:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        look_at_point = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+        look_at_point = context.stream.readVector3()
         name = context.stream.readUInt16PrefixedAsciiString()
         pitch = context.stream.readFloat()
         roll = context.stream.readFloat()

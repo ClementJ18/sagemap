@@ -89,10 +89,10 @@ class CliffTextureMapping:
         texture_tile = context.stream.readUInt32()
         
         # Read 4 Vector2s (each is 2 floats)
-        bottom_left_coords = (context.stream.readFloat(), context.stream.readFloat())
-        bottom_right_coords = (context.stream.readFloat(), context.stream.readFloat())
-        top_right_coords = (context.stream.readFloat(), context.stream.readFloat())
-        top_left_coords = (context.stream.readFloat(), context.stream.readFloat())
+        bottom_left_coords = context.stream.readVector2()
+        bottom_right_coords = context.stream.readVector2()
+        top_right_coords = context.stream.readVector2()
+        top_left_coords = context.stream.readVector2()
         
         unknown2 = context.stream.readUInt16()
         

@@ -49,9 +49,9 @@ class GlobalLight:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        ambient = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
-        color = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
-        direction = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+        ambient = context.stream.readVector3()
+        color = context.stream.readVector3()
+        direction = context.stream.readVector3()
 
         return cls(ambient, color, direction)
 
@@ -143,16 +143,12 @@ class GlobalLighting:
             unknown2 = None
             unknown3 = None
             if version >= 12:
-                unknown2 = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+                unknown2 = context.stream.readVector3()
                 unknown3 = MapColorArgb.parse(context)
 
             no_cloud_factor = None
             if version >= 8:
-                no_cloud_factor = (
-                    context.stream.readFloat(),
-                    context.stream.readFloat(),
-                    context.stream.readFloat(),
-                )
+                no_cloud_factor = context.stream.readVector3()
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(
