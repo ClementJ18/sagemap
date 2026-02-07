@@ -14,15 +14,14 @@ class LibraryMaps:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, _ = context.parse_asset_header()
+        with context.read_asset() as (version, _):
+            values_count = context.stream.readUInt32()
+            values = []
 
-        values_count = context.stream.readUInt32()
-        values = []
+            for _ in range(values_count):
+                values.append(context.stream.readUInt16PrefixedAsciiString())
 
-        for _ in range(values_count):
-            values.append(context.stream.readUInt16PrefixedAsciiString())
-
-        context.logger.debug(f"Parsed LibraryMaps with {len(values)} values")
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version, values)
 
 
@@ -35,16 +34,16 @@ class LibraryMapLists:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, datasize = context.parse_asset_header()
-        end_pos = context.stream.tell() + datasize
+        with context.read_asset() as (version, datasize):
+            end_pos = context.stream.tell() + datasize
 
-        lists = []
-        while context.stream.tell() < end_pos:
-            asset_name = context.parse_asset_name()
-            if asset_name != LibraryMaps.asset_name:
-                raise ValueError(f"Expected {LibraryMaps.asset_name} asset, got {asset_name}")
+            lists = []
+            while context.stream.tell() < end_pos:
+                asset_name = context.parse_asset_name()
+                if asset_name != LibraryMaps.asset_name:
+                    raise ValueError(f"Expected {LibraryMaps.asset_name} asset, got {asset_name}")
 
-            lists.append(LibraryMaps.parse(context))
+                lists.append(LibraryMaps.parse(context))
 
-        context.logger.debug(f"Parsed LibraryMapLists with {len(lists)} items")
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version, lists)

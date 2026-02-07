@@ -15,11 +15,9 @@ class WaterSettings:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, _ = context.parse_asset_header()
-        reflection_on = context.stream.readBool()
-        reflection_plane_z = context.stream.readSingle()
+        with context.read_asset() as (version, _):
+            reflection_on = context.stream.readBool()
+            reflection_plane_z = context.stream.readSingle()
 
-        context.logger.debug(
-            f"Parsed GlobalWaterSettings asset, version: {version}, Reflection On: {reflection_on}, Reflection Plane Z: {reflection_plane_z}"
-        )
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version, reflection_on, reflection_plane_z)

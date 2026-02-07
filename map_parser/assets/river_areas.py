@@ -90,10 +90,11 @@ class RiverAreas:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, _ = context.parse_asset_header()
-        river_area_count = context.stream.readUInt32()
-        areas = []
-        for _ in range(river_area_count):
-            areas.append(RiverArea.parse(context, version))
+        with context.read_asset() as (version, _):
+            river_area_count = context.stream.readUInt32()
+            areas = []
+            for _ in range(river_area_count):
+                areas.append(RiverArea.parse(context, version))
 
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version, areas)

@@ -260,4 +260,4 @@ class BinaryStream:
         self.base_stream.seek(offset, whence)
 
     def tell(self):
-        return self.tell()
+        return self.base_stream.tell()

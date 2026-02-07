@@ -24,12 +24,11 @@ class Teams:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, _ = context.parse_asset_header()
+        with context.read_asset() as (version, _):
+            teams = []
+            team_count = context.stream.readUInt32()
+            for _ in range(team_count):
+                teams.append(Team.parse(context))
 
-        teams = []
-        team_count = context.stream.readUInt32()
-        for _ in range(team_count):
-            teams.append(Team.parse(context))
-
-        context.logger.debug(f"Parsed {len(teams)} teams in Teams asset (v{version})")
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version=version, teams=teams)

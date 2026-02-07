@@ -76,11 +76,11 @@ class PostEffectsChunk:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, _ = context.parse_asset_header()
+        with context.read_asset() as (version, _):
+            post_effects_count = context.stream.readUInt32() if version >= 2 else context.stream.readUChar()
+            post_effects = []
+            for _ in range(post_effects_count):
+                post_effects.append(PostEffect.parse(context, version))
 
-        post_effects_count = context.stream.readUInt32() if version >= 2 else context.stream.readUChar()
-        post_effects = []
-        for _ in range(post_effects_count):
-            post_effects.append(PostEffect.parse(context, version))
-
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version=version, post_effects=post_effects)

@@ -16,6 +16,6 @@ class WorldInfo:
         with context.read_asset() as (version, _):
             properties = context.properties_to_dict(context.parse_properties())
 
-        context.logger.debug(f"Parsed WorldInfo asset, version: {version}")
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version, properties)
     

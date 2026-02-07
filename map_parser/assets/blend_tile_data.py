@@ -144,117 +144,118 @@ class BlendTileData:
     
     @classmethod
     def parse(cls, context: 'ParsingContext', height_map_data: 'HeightMapData'):
-        version, datasize = context.parse_asset_header()
-        start_pos = context.stream.tell()
-        end_pos = start_pos + datasize
+        with context.read_asset() as (version, datasize):
+            start_pos = context.stream.tell()
+            end_pos = start_pos + datasize
 
-        if version < 6:
-            raise ValueError(f"Unsupported BlendTileData version: {version}")
+            if version < 6:
+                raise ValueError(f"Unsupported BlendTileData version: {version}")
         
-        if height_map_data is None:
-            raise ValueError("Expected HeightMapData asset before BlendTileData asset.")
-        
-        width = height_map_data.width
-        height = height_map_data.height
-        
-        tiles_count = context.stream.readUInt32()
-        if tiles_count != width * height:
-            raise ValueError(f"Invalid tiles_count: {tiles_count}, expected: {width * height}")
-
-        tiles = context.stream.readUInt16Array2D(width, height)
-
-        blend_bit_size = get_blend_bit_size(version)
-        blends = context.stream.readUIntArray2D(width, height, blend_bit_size)
-        three_way_blends = context.stream.readUIntArray2D(width, height, blend_bit_size)
-        cliff_textures = context.stream.readUIntArray2D(width, height, blend_bit_size)
-
-        impassability = None
-        if version > 6:
-            passability_width = height_map_data.width
-            if version == 7:
-                # C&C Generals clips partial bytes from each row of passability data
-                passability_width = ((passability_width + 1) // 8) * 8
-
-            # If terrain is passable, there's a 0 in the data file.
-            impassability = context.stream.readSingleBitBooleanArray2D(passability_width, height_map_data.height)
-
-        impassability_to_players = None
-        if version >= 10:
-            impassability_to_players = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
-
-        passage_widths = None
-        if version >= 11:
-            passage_widths = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
-
-        taintability = None
-        if version >= 14 and version < 25:
-            taintability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
-
-        extra_passability = None
-        if version >= 15:
-            extra_passability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
-
-        flammability = None
-        if version >= 16 and version < 25:
-            flammability = context.stream.readByteArray2DAsEnum(height_map_data.width, height_map_data.height, TileFlammability)
-
-        visibility = None
-        if version >= 17:
-            # Visibility uses row-based byte alignment (padValue: 0xFF in C# WriteTo)
-            visibility = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height, row_byte_aligned=True)
-
-        buildability = None
-        impassability_to_air_units = None
-        tiberium_growability = None
-        if version >= 24:
-            # TODO: Are these in the right order?
-            buildability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
-            impassability_to_air_units = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
-            tiberium_growability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
-
-        dynamic_shrubbery_density = None
-        if version >= 25:
-            dynamic_shrubbery_density = context.stream.readByteArray2D(height_map_data.width, height_map_data.height)
-
-        texture_cell_count = context.stream.readUInt32()
-
-        blends_count_raw = context.stream.readUInt32()
-        blends_count = blends_count_raw
-        if blends_count > 0:
-            # Usually minimum value is 1, but some files (perhaps Generals, not Zero Hour?) have 0.
-            blends_count -= 1
-
-        parsed_cliff_texture_mappings_count = context.stream.readUInt32()
-        cliff_blends_count = parsed_cliff_texture_mappings_count
-        if cliff_blends_count > 0:
-            # Usually minimum value is 1, but some files (perhaps Generals, not Zero Hour?) have 0.
-            cliff_blends_count -= 1
-        
-        texture_count = context.stream.readUInt32()
-        textures = []
-        for i in range(texture_count):
-            textures.append(BlendTileTexture.parse(context))
+            if height_map_data is None:
+                raise ValueError("Expected HeightMapData asset before BlendTileData asset.")
             
+            width = height_map_data.width
+            height = height_map_data.height
+            
+            tiles_count = context.stream.readUInt32()
+            if tiles_count != width * height:
+                raise ValueError(f"Invalid tiles_count: {tiles_count}, expected: {width * height}")
 
-        # Can be a variety of values, don't know what it means.
-        magic_value1 = context.stream.readUInt32()
+            tiles = context.stream.readUInt16Array2D(width, height)
 
-        magic_value2 = context.stream.readUInt32()
-        if magic_value2 != 0:
-            raise ValueError(f"Expected magic_value2 to be 0, got: {magic_value2}")
+            blend_bit_size = get_blend_bit_size(version)
+            blends = context.stream.readUIntArray2D(width, height, blend_bit_size)
+            three_way_blends = context.stream.readUIntArray2D(width, height, blend_bit_size)
+            cliff_textures = context.stream.readUIntArray2D(width, height, blend_bit_size)
 
-        blend_descriptions = []
-        for _ in range(blends_count):
-            blend_descriptions.append(BlendDescription.parse(context, version))
+            impassability = None
+            if version > 6:
+                passability_width = height_map_data.width
+                if version == 7:
+                    # C&C Generals clips partial bytes from each row of passability data
+                    passability_width = ((passability_width + 1) // 8) * 8
 
-        cliff_texture_mappings = []
-        for _ in range(cliff_blends_count):
-            cliff_texture_mappings.append(CliffTextureMapping.parse(context))
+                # If terrain is passable, there's a 0 in the data file.
+                impassability = context.stream.readSingleBitBooleanArray2D(passability_width, height_map_data.height)
 
-        unparsed_data = context.stream.base_stream.read(end_pos - context.stream.tell())
-        if len(unparsed_data) > 0:
-            context.logger.warning(f"BlendTileData: {len(unparsed_data)} bytes of unparsed data at the end of the asset")
+            impassability_to_players = None
+            if version >= 10:
+                impassability_to_players = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
 
+            passage_widths = None
+            if version >= 11:
+                passage_widths = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
+
+            taintability = None
+            if version >= 14 and version < 25:
+                taintability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
+
+            extra_passability = None
+            if version >= 15:
+                extra_passability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
+
+            flammability = None
+            if version >= 16 and version < 25:
+                flammability = context.stream.readByteArray2DAsEnum(height_map_data.width, height_map_data.height, TileFlammability)
+
+            visibility = None
+            if version >= 17:
+                # Visibility uses row-based byte alignment (padValue: 0xFF in C# WriteTo)
+                visibility = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height, row_byte_aligned=True)
+
+            buildability = None
+            impassability_to_air_units = None
+            tiberium_growability = None
+            if version >= 24:
+                # TODO: Are these in the right order?
+                buildability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
+                impassability_to_air_units = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
+                tiberium_growability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
+
+            dynamic_shrubbery_density = None
+            if version >= 25:
+                dynamic_shrubbery_density = context.stream.readByteArray2D(height_map_data.width, height_map_data.height)
+
+            texture_cell_count = context.stream.readUInt32()
+
+            blends_count_raw = context.stream.readUInt32()
+            blends_count = blends_count_raw
+            if blends_count > 0:
+                # Usually minimum value is 1, but some files (perhaps Generals, not Zero Hour?) have 0.
+                blends_count -= 1
+
+            parsed_cliff_texture_mappings_count = context.stream.readUInt32()
+            cliff_blends_count = parsed_cliff_texture_mappings_count
+            if cliff_blends_count > 0:
+                # Usually minimum value is 1, but some files (perhaps Generals, not Zero Hour?) have 0.
+                cliff_blends_count -= 1
+            
+            texture_count = context.stream.readUInt32()
+            textures = []
+            for i in range(texture_count):
+                textures.append(BlendTileTexture.parse(context))
+                
+
+            # Can be a variety of values, don't know what it means.
+            magic_value1 = context.stream.readUInt32()
+
+            magic_value2 = context.stream.readUInt32()
+            if magic_value2 != 0:
+                raise ValueError(f"Expected magic_value2 to be 0, got: {magic_value2}")
+
+            blend_descriptions = []
+            for _ in range(blends_count):
+                blend_descriptions.append(BlendDescription.parse(context, version))
+
+            cliff_texture_mappings = []
+            for _ in range(cliff_blends_count):
+                cliff_texture_mappings.append(CliffTextureMapping.parse(context))
+
+            unparsed_data = context.stream.base_stream.read(end_pos - context.stream.tell())
+            if len(unparsed_data) > 0:
+                context.logger.warning(f"BlendTileData: {len(unparsed_data)} bytes of unparsed data at the end of the asset")
+
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(
             tiles=tiles,
             blends=blends,

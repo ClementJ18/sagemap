@@ -32,5 +32,5 @@ class AssetList:
             asset_count = context.stream.readUInt32()
             asset_names = [AssetListItem.parse(context) for _ in range(asset_count)]
 
-        context.logger.debug(f"Parsed AssetList asset, version: {version}, Asset Count: {asset_count}")
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version, asset_names)

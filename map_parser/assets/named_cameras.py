@@ -51,11 +51,11 @@ class NamedCameras:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, _ = context.parse_asset_header()
+        with context.read_asset() as (version, _):
+            cameras = []
+            camera_count = context.stream.readUInt32()
+            for _ in range(camera_count):
+                cameras.append(NamedCamera.parse(context))
 
-        cameras = []
-        camera_count = context.stream.readUInt32()
-        for _ in range(camera_count):
-            cameras.append(NamedCamera.parse(context))
-
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version=version, cameras=cameras)

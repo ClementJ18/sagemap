@@ -99,15 +99,14 @@ class BuildLists:
 
     @classmethod
     def parse(cls, context: "ParsingContext", has_asset_list: bool):
-        version, _ = context.parse_asset_header()
-        build_list_count = context.stream.readUInt32()
-        build_lists = []
-        for _ in range(build_list_count):
-            item = BuildList.parse(context, version, has_asset_list)
-            build_lists.append(item)
+        with context.read_asset() as (version, _):
+            build_list_count = context.stream.readUInt32()
+            build_lists = []
+            for _ in range(build_list_count):
+                item = BuildList.parse(context, version, has_asset_list)
+                build_lists.append(item)
 
-        context.logger.debug(f"Parsed Side with {len(build_lists)} build list items")
-
+        context.logger.debug(f"Finished parsing Side")
         return cls(version, build_lists)
 
 
@@ -142,36 +141,33 @@ class SidesList:
 
     @classmethod
     def parse(cls, context: "ParsingContext", has_asset_list: bool):
-        version, datasize = context.parse_asset_header()
-        end_pos = context.stream.tell() + datasize
+        with context.read_asset() as (version, datasize):
+            end_pos = context.stream.tell() + datasize
 
-        unknown1 = False
-        if version >= 6:
-            unknown1 = context.stream.readBool()
+            unknown1 = False
+            if version >= 6:
+                unknown1 = context.stream.readBool()
 
-        player_count = context.stream.readUInt32()
-        players = []
-        for _ in range(player_count):
-            players.append(Player.parse(context, version, has_asset_list))
+            player_count = context.stream.readUInt32()
+            players = []
+            for _ in range(player_count):
+                players.append(Player.parse(context, version, has_asset_list))
 
-        if version >= 5:
-            context.logger.debug(f"Parsed {len(players)} players in SidesList (v{version})")
-            return cls(version=version, unknown1=unknown1, players=players)
-
-        teams = []
-        if version >= 2:
-            team_count = context.stream.readUInt32()
-            for _ in range(team_count):
-                teams.append(Team.parse(context))
-
-        while context.stream.tell() < end_pos:
-            asset_name = context.parse_asset_name()
-            if asset_name == "Team":
-                raise ValueError("Unexpected Team asset in SidesList")
+            if version >= 5:
+                teams = []
             else:
-                raise ValueError(f"Unexpected asset in {cls.asset_name}: {asset_name}")
+                teams = []
+                if version >= 2:
+                    team_count = context.stream.readUInt32()
+                    for _ in range(team_count):
+                        teams.append(Team.parse(context))
 
-        context.logger.debug(
-            f"Parsed {len(players)} players and {len(teams)} teams in SidesList (v{version})"
-        )
+                while context.stream.tell() < end_pos:
+                    asset_name = context.parse_asset_name()
+                    if asset_name == "Team":
+                        raise ValueError("Unexpected Team asset in SidesList")
+                    else:
+                        raise ValueError(f"Unexpected asset in {cls.asset_name}: {asset_name}")
+
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version=version, unknown1=unknown1, players=players, teams=teams)

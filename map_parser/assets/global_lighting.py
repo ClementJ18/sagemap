@@ -127,34 +127,34 @@ class GlobalLighting:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, _ = context.parse_asset_header()
+        with context.read_asset() as (version, _):
+            time = TimeOfTheDay(context.stream.readUInt32())
+            lighting_configurations = {}
 
-        time = TimeOfTheDay(context.stream.readUInt32())
-        lighting_configurations = {}
+            for member in TimeOfTheDay:
+                lighting_configurations[member] = GlobalLightingConfiguration.parse(context, version)
 
-        for member in TimeOfTheDay:
-            lighting_configurations[member] = GlobalLightingConfiguration.parse(context, version)
+            shadow_color = MapColorArgb.parse(context)
 
-        shadow_color = MapColorArgb.parse(context)
+            unknown = None
+            if version >= 7 and version < 11:
+                unknown = context.stream.readBytes(4 if version >= 9 else 44)
 
-        unknown = None
-        if version >= 7 and version < 11:
-            unknown = context.stream.readBytes(4 if version >= 9 else 44)
+            unknown2 = None
+            unknown3 = None
+            if version >= 12:
+                unknown2 = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
+                unknown3 = MapColorArgb.parse(context)
 
-        unknown2 = None
-        unknown3 = None
-        if version >= 12:
-            unknown2 = (context.stream.readFloat(), context.stream.readFloat(), context.stream.readFloat())
-            unknown3 = MapColorArgb.parse(context)
+            no_cloud_factor = None
+            if version >= 8:
+                no_cloud_factor = (
+                    context.stream.readFloat(),
+                    context.stream.readFloat(),
+                    context.stream.readFloat(),
+                )
 
-        no_cloud_factor = None
-        if version >= 8:
-            no_cloud_factor = (
-                context.stream.readFloat(),
-                context.stream.readFloat(),
-                context.stream.readFloat(),
-            )
-
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(
             time_of_the_day=time,
             lighting_configurations=lighting_configurations,

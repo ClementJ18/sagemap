@@ -64,11 +64,12 @@ class StandingWaterAreas:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, _ = context.parse_asset_header()
-        area_count = context.stream.readUInt32()
-        areas = []
+        with context.read_asset() as (version, _):
+            area_count = context.stream.readUInt32()
+            areas = []
 
-        for _ in range(area_count):
-            areas.append(StandingWaterArea.parse(context))
+            for _ in range(area_count):
+                areas.append(StandingWaterArea.parse(context))
 
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version, areas)

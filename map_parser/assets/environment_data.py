@@ -20,30 +20,31 @@ class EnvironmentData:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, datasize = context.parse_asset_header()
-        end_pos = context.stream.tell() + datasize
+        with context.read_asset() as (version, datasize):
+            end_pos = context.stream.tell() + datasize
 
-        water_max_alpha_depth = None
-        deep_water_alpha = None
-        if version >= 3:
-            water_max_alpha_depth = context.stream.readFloat()
-            deep_water_alpha = context.stream.readFloat()
+            water_max_alpha_depth = None
+            deep_water_alpha = None
+            if version >= 3:
+                water_max_alpha_depth = context.stream.readFloat()
+                deep_water_alpha = context.stream.readFloat()
 
-        is_macro_texture_stretched = None
-        if version < 5:
-            is_macro_texture_stretched = context.stream.readBool()
+            is_macro_texture_stretched = None
+            if version < 5:
+                is_macro_texture_stretched = context.stream.readBool()
 
-        macro_texture = context.stream.readUInt16PrefixedAsciiString()
-        cloud_texture = context.stream.readUInt16PrefixedAsciiString()
+            macro_texture = context.stream.readUInt16PrefixedAsciiString()
+            cloud_texture = context.stream.readUInt16PrefixedAsciiString()
 
-        unknown_texture = None
-        if version >= 4:
-            unknown_texture = context.stream.readUInt16PrefixedAsciiString()
+            unknown_texture = None
+            if version >= 4:
+                unknown_texture = context.stream.readUInt16PrefixedAsciiString()
 
-        unknown_texture2 = None
-        if version >= 6 and context.stream.tell() < end_pos:
-            unknown_texture2 = context.stream.readUInt16PrefixedAsciiString()
+            unknown_texture2 = None
+            if version >= 6 and context.stream.tell() < end_pos:
+                unknown_texture2 = context.stream.readUInt16PrefixedAsciiString()
 
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(
             version,
             water_max_alpha_depth,

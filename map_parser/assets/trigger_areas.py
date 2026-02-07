@@ -41,10 +41,11 @@ class TriggerAreas:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, _ = context.parse_asset_header()
-        trigger_areas = []
-        area_count = context.stream.readUInt32()
-        for _ in range(area_count):
-            trigger_areas.append(TriggerArea.parse(context))
+        with context.read_asset() as (version, _):
+            trigger_areas = []
+            area_count = context.stream.readUInt32()
+            for _ in range(area_count):
+                trigger_areas.append(TriggerArea.parse(context))
 
+        context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version, trigger_areas)
