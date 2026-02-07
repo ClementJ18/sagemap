@@ -38,6 +38,29 @@ from .stream import BinaryStream
 
 
 class Map:
+    global_version: GlobalVersion
+    height_map_data: HeightMapData
+    blend_tile_data: BlendTileData
+    world_info: WorldInfo
+    objects_list: ObjectsList
+    waypoints_list: WaypointsList
+    sides_list: SidesList
+    player_scripts_list: PlayerScriptsList
+    water_settings: WaterSettings
+    asset_list: AssetList
+    build_lists: BuildLists
+    polygon_triggers: PolygonTriggers
+    trigger_areas: TriggerAreas
+    standing_water_areas: StandingWaterAreas
+    standing_wave_areas: StandingWaveAreas
+    river_areas: RiverAreas
+    global_lighting: GlobalLighting
+    environment_data: EnvironmentData
+    post_effects_chunk: PostEffectsChunk
+    named_cameras: NamedCameras
+    camera_animation_list: CameraAnimationList
+    library_map_lists: LibraryMapLists
+
     def __init__(self, context: ParsingContext = None):
         self.context = context
 
@@ -73,7 +96,7 @@ class Map:
 
     def parse(self):
         self.assets = self.context.parse_assets()
-        while self.context.stream.tell() < len(self.context.stream.base_stream.getvalue()):
+        while self.context.stream.tell() < len(self.context.stream.getvalue()):
             asset_name = self.context.parse_asset_name()
             self.context.logger.info(f"Processing asset: {asset_name}")
             self.parse_asset(asset_name)
@@ -178,7 +201,6 @@ def parse_map(path) -> Map:
         decompressed_data = compressed_data
 
     logger = logging.getLogger("map_parser")
-    logger.setLevel(logging.INFO)
 
     stream = BinaryStream(io.BytesIO(decompressed_data))
     context = ParsingContext(stream)

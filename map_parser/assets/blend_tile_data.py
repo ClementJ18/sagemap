@@ -140,7 +140,6 @@ class BlendTileData:
     magic_value2: int
     blend_descriptions: list[BlendDescription]
     cliff_texture_mappings: list[CliffTextureMapping]
-    unparsed_data: bytes
     
     @classmethod
     def parse(cls, context: 'ParsingContext', height_map_data: 'HeightMapData'):
@@ -200,8 +199,8 @@ class BlendTileData:
 
             visibility = None
             if version >= 17:
-                # Visibility uses row-based byte alignment (padValue: 0xFF in C# WriteTo)
-                visibility = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height, row_byte_aligned=True)
+                # Note: All ReadSingleBitBooleanArray2D calls in C# use row-byte-alignment
+                visibility = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
 
             buildability = None
             impassability_to_air_units = None
@@ -251,10 +250,6 @@ class BlendTileData:
             for _ in range(cliff_blends_count):
                 cliff_texture_mappings.append(CliffTextureMapping.parse(context))
 
-            unparsed_data = context.stream.base_stream.read(end_pos - context.stream.tell())
-            if len(unparsed_data) > 0:
-                context.logger.warning(f"BlendTileData: {len(unparsed_data)} bytes of unparsed data at the end of the asset")
-
         context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(
             tiles=tiles,
@@ -279,6 +274,5 @@ class BlendTileData:
             magic_value2=magic_value2,
             blend_descriptions=blend_descriptions,
             cliff_texture_mappings=cliff_texture_mappings,
-            unparsed_data=unparsed_data
         )
 

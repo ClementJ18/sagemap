@@ -165,74 +165,59 @@ class BinaryStream:
                 self.writeUInt16(array2d[x][y])
 
     def readUIntArray2D(self, width: int, height: int, bit_size: int) -> list[list[int]]:
-        """Read a 2D array of unsigned integers with variable bit size."""
+        """Read a 2D array of unsigned integers.
+        
+        Args:
+            width: Width of the array
+            height: Height of the array
+            bit_size: Size in bits (16 or 32) - determines whether to read UInt16 or UInt32
+        """
         result = [[0] * height for _ in range(width)]
-        bits_read = 0
-        current_byte = 0
         
         for y in range(height):
             for x in range(width):
-                value = 0
-                bits_needed = bit_size
-                
-                while bits_needed > 0:
-                    if bits_read == 0:
-                        current_byte = self.readUChar()
-                        bits_read = 8
-                    
-                    bits_to_read = min(bits_needed, bits_read)
-                    mask = (1 << bits_to_read) - 1
-                    value |= ((current_byte & mask) << (bit_size - bits_needed))
-                    
-                    current_byte >>= bits_to_read
-                    bits_read -= bits_to_read
-                    bits_needed -= bits_to_read
+                if bit_size == 16:
+                    value = self.readUInt16()
+                elif bit_size == 32:
+                    value = self.readUInt32()
+                else:
+                    raise ValueError(f"Unsupported bit_size: {bit_size}. Expected 16 or 32.")
                 
                 result[x][y] = value
         
-        # If we ended mid-byte, the remaining bits are padding - skip to next byte
-        # This is implicit since bits_read will be reset to 0 on next read
-        
         return result
 
-    def readSingleBitBooleanArray2D(self, width: int, height: int, row_byte_aligned: bool = False) -> list[list[bool]]:
+    def readSingleBitBooleanArray2D(self, width: int, height: int, row_byte_aligned: bool = True) -> list[list[bool]]:
         """Read a 2D array of single-bit boolean values.
         
         Args:
             width: Width of the array
             height: Height of the array  
-            row_byte_aligned: If True, each row starts on a byte boundary. If False, bits flow continuously.
+            row_byte_aligned: If True (default), each row starts on a byte boundary matching C# behavior.
+                             If False, bits flow continuously (non-standard).
         """
         result = [[False] * height for _ in range(width)]
         
         if row_byte_aligned:
             # Each row starts on a fresh byte boundary
             for y in range(height):
-                bits_read = 0
-                current_byte = 0
-                
+                temp = 0
                 for x in range(width):
-                    if bits_read == 0:
-                        current_byte = self.readUChar()
-                        bits_read = 8
+                    if x % 8 == 0:
+                        temp = self.readUChar()
                     
-                    result[x][y] = (current_byte & 1) == 0  # 0 means true (passable)
-                    current_byte >>= 1
-                    bits_read -= 1
+                    result[x][y] = (temp & (1 << (x % 8))) != 0
         else:
             # Bits flow continuously without row alignment
-            bits_read = 0
-            current_byte = 0
-            
+            temp = 0
+            bit_index = 0
             for y in range(height):
                 for x in range(width):
-                    if bits_read == 0:
-                        current_byte = self.readUChar()
-                        bits_read = 8
+                    if bit_index % 8 == 0:
+                        temp = self.readUChar()
                     
-                    result[x][y] = (current_byte & 1) == 0  # 0 means true (passable)
-                    current_byte >>= 1
-                    bits_read -= 1
+                    result[x][y] = (temp & (1 << (bit_index % 8))) != 0
+                    bit_index += 1
             
             # Note: If we ended mid-byte, remaining bits are padding
             # This is implicit since bits_read will be reset on next read
@@ -270,3 +255,6 @@ class BinaryStream:
 
     def tell(self):
         return self.base_stream.tell()
+    
+    def getvalue(self):
+        return self.base_stream.getvalue()
