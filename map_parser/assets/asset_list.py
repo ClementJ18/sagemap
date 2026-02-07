@@ -28,9 +28,9 @@ class AssetList:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        version, _ = context.parse_asset_header()
-        asset_count = context.stream.readUInt32()
-        asset_names = [AssetListItem.parse(context) for _ in range(asset_count)]
+        with context.read_asset() as (version, _):
+            asset_count = context.stream.readUInt32()
+            asset_names = [AssetListItem.parse(context) for _ in range(asset_count)]
 
         context.logger.debug(f"Parsed AssetList asset, version: {version}, Asset Count: {asset_count}")
         return cls(version, asset_names)

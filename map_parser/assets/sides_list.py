@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from .misc import Team
+from .teams import Team
 
 if TYPE_CHECKING:
     from ..context import ParsingContext
@@ -143,7 +143,7 @@ class SidesList:
     @classmethod
     def parse(cls, context: "ParsingContext", has_asset_list: bool):
         version, datasize = context.parse_asset_header()
-        end_pos = context.stream.base_stream.tell() + datasize
+        end_pos = context.stream.tell() + datasize
 
         unknown1 = False
         if version >= 6:
@@ -164,7 +164,7 @@ class SidesList:
             for _ in range(team_count):
                 teams.append(Team.parse(context))
 
-        while context.stream.base_stream.tell() < end_pos:
+        while context.stream.tell() < end_pos:
             asset_name = context.parse_asset_name()
             if asset_name == "Team":
                 raise ValueError("Unexpected Team asset in SidesList")

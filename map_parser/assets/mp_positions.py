@@ -46,8 +46,8 @@ class MPPositionsList:
     def parse(cls, context: "ParsingContext"):
         version, datasize = context.parse_asset_header()
         positions = []
-        end_pos = context.stream.base_stream.tell() + datasize
-        while context.stream.base_stream.tell() < end_pos:
+        end_pos = context.stream.tell() + datasize
+        while context.stream.tell() < end_pos:
             name = context.parse_asset_name()
             if name != "MPPositionInfo":
                 raise ValueError(f"Expected MPPositionInfo asset, got {name}")

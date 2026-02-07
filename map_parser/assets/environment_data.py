@@ -21,7 +21,7 @@ class EnvironmentData:
     @classmethod
     def parse(cls, context: "ParsingContext"):
         version, datasize = context.parse_asset_header()
-        end_pos = context.stream.base_stream.tell() + datasize
+        end_pos = context.stream.tell() + datasize
 
         water_max_alpha_depth = None
         deep_water_alpha = None
@@ -41,7 +41,7 @@ class EnvironmentData:
             unknown_texture = context.stream.readUInt16PrefixedAsciiString()
 
         unknown_texture2 = None
-        if version >= 6 and context.stream.base_stream.tell() < end_pos:
+        if version >= 6 and context.stream.tell() < end_pos:
             unknown_texture2 = context.stream.readUInt16PrefixedAsciiString()
 
         return cls(

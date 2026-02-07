@@ -1,5 +1,5 @@
 from dataclasses import asdict, is_dataclass
-from enum import Enum, IntEnum
+from enum import Enum
 import base64
 import io
 import logging
@@ -8,12 +8,10 @@ from reversebox.compression.compression_refpack import RefpackHandler
 
 from .assets import (
     AssetList,
-    BlendTileData,
     BuildLists,
     CameraAnimationList,
     EnvironmentData,
     GlobalLighting,
-    GlobalVersion,
     HeightMapData,
     LibraryMapLists,
     MPPositionsList,
@@ -27,11 +25,13 @@ from .assets import (
     SkippedAsset,
     StandingWaterAreas,
     StandingWaveAreas,
-    Teams,
     TriggerAreas,
     WaterSettings,
-    WaypointsList,
     WorldInfo,
+    Teams,
+    GlobalVersion,
+    BlendTileData,
+    WaypointsList
 )
 from .context import ParsingContext
 from .stream import BinaryStream
@@ -73,7 +73,7 @@ class Map:
 
     def parse(self):
         self.assets = self.context.parse_assets()
-        while self.context.stream.base_stream.tell() < len(self.context.stream.base_stream.getvalue()):
+        while self.context.stream.tell() < len(self.context.stream.base_stream.getvalue()):
             asset_name = self.context.parse_asset_name()
             self.context.logger.info(f"Processing asset: {asset_name}")
             self.parse_asset(asset_name)
@@ -92,11 +92,9 @@ class Map:
         elif asset_name == ObjectsList.asset_name:
             self.objects_list = ObjectsList.parse(self.context)
         elif asset_name == GlobalVersion.asset_name:
-            # Global version is very boring, skip!
-            self.global_version = GlobalVersion.parse(self.context, asset_name)
+            self.global_version = GlobalVersion.parse(self.context)
         elif asset_name == BlendTileData.asset_name:
-            # Quite complex, skip for now
-            self.blend_tile_data = BlendTileData.parse(self.context, asset_name)
+            self.blend_tile_data = BlendTileData.parse(self.context, self.height_map_data)
         elif asset_name == MPPositionsList.asset_name:
             self.mp_positions_list = MPPositionsList.parse(self.context)
         elif asset_name == SidesList.asset_name:

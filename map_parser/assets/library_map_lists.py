@@ -36,10 +36,10 @@ class LibraryMapLists:
     @classmethod
     def parse(cls, context: "ParsingContext"):
         version, datasize = context.parse_asset_header()
-        end_pos = context.stream.base_stream.tell() + datasize
+        end_pos = context.stream.tell() + datasize
 
         lists = []
-        while context.stream.base_stream.tell() < end_pos:
+        while context.stream.tell() < end_pos:
             asset_name = context.parse_asset_name()
             if asset_name != LibraryMaps.asset_name:
                 raise ValueError(f"Expected {LibraryMaps.asset_name} asset, got {asset_name}")

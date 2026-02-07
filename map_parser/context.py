@@ -1,4 +1,5 @@
 import logging
+from contextlib import contextmanager
 from enum import IntEnum
 from typing import TypedDict
 
@@ -103,3 +104,39 @@ class ParsingContext:
         asset_version = self.stream.readUInt16()
         datasize = self.stream.readUInt32()
         return asset_version, datasize
+    
+    @contextmanager
+    def read_asset(self):
+        version, datasize = self.parse_asset_header()
+        start_pos = self.stream.tell()
+
+        yield version, datasize
+
+        end_pos = self.stream.tell()
+        if end_pos - start_pos != datasize:
+            raise ValueError(f"Asset data size mismatch: expected {datasize} bytes, read {end_pos - start_pos} bytes")
+        
+    
+    
+class WritingContext:
+    def __init__(self, stream: BinaryStream):
+        self.stream = stream
+        self.assets = {}
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(logging.NullHandler())
+
+    @contextmanager
+    def write_asset(self, asset_name: str, version: int):
+        self.logger.debug(f"Writing asset: {asset_name}, Version: {version}")
+        self.stream.writeUInt16(version)
+        data_size_position = self.stream.tell()
+        self.stream.writeUInt32(0)
+        data_position = self.stream.tell()
+
+        yield
+
+        end_position = self.stream.tell()
+        data_size = end_position - data_position
+        self.stream.seek(data_size_position)
+        self.stream.writeUInt32(data_size)
+        self.stream.seek(end_position)

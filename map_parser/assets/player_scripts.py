@@ -96,9 +96,9 @@ class OrCondition:
     def parse(cls, context: "ParsingContext"):
         conditions = []
         _, datasize = context.parse_asset_header()
-        condition_end_pos = context.stream.base_stream.tell() + datasize
+        condition_end_pos = context.stream.tell() + datasize
 
-        while context.stream.base_stream.tell() < condition_end_pos:
+        while context.stream.tell() < condition_end_pos:
             asset_name = context.parse_asset_name()
             if asset_name != "Condition":
                 raise ValueError(f"Expected Condition asset, got {asset_name}")
@@ -140,7 +140,7 @@ class Script:
     @classmethod
     def parse(cls, context: "ParsingContext"):
         asset_version, datasize = context.parse_asset_header()
-        script_end_pos = context.stream.base_stream.tell() + datasize
+        script_end_pos = context.stream.tell() + datasize
 
         name = context.stream.readUInt16PrefixedAsciiString()
         context.logger.info(f"Parsing script: {name}")
@@ -196,7 +196,7 @@ class Script:
         or_conditions = []
         actions_if_true = []
         actions_if_false = []
-        while context.stream.base_stream.tell() < script_end_pos:
+        while context.stream.tell() < script_end_pos:
             asset_name = context.parse_asset_name()
             if asset_name == "OrCondition":
                 or_conditions.append(OrCondition.parse(context))
@@ -246,19 +246,19 @@ class ScriptGroup:
     @classmethod
     def parse(cls, context: "ParsingContext"):
         _, datasize = context.parse_asset_header()
-        group_end_pos = context.stream.base_stream.tell() + datasize
+        group_end_pos = context.stream.tell() + datasize
         name = context.stream.readUInt16PrefixedAsciiString()
         is_active = context.stream.readBool()
         is_subroutine = context.stream.readBool()
 
         context.logger.debug(
-            f"ScriptGroup: {name}, Current Pos: {context.stream.base_stream.tell()}, Group End Pos: {group_end_pos}"
+            f"ScriptGroup: {name}, Current Pos: {context.stream.tell()}, Group End Pos: {group_end_pos}"
         )
 
         script_groups = {}
         scripts = {}
 
-        while context.stream.base_stream.tell() < group_end_pos:
+        while context.stream.tell() < group_end_pos:
             nested_groups, nested_scripts = ScriptGroup.parse_script_list(context)
             script_groups.update(nested_groups)
             scripts.update(nested_scripts)
@@ -297,7 +297,7 @@ class ScriptList:
     @classmethod
     def parse(cls, context: "ParsingContext"):
         asset_version, datasize = context.parse_asset_header()
-        script_list_end_pos = context.stream.base_stream.tell() + datasize
+        script_list_end_pos = context.stream.tell() + datasize
 
         if asset_version != 1:
             raise ValueError(f"Unexpected ScriptList version: {asset_version}")
@@ -305,7 +305,7 @@ class ScriptList:
         script_groups = {}
         scripts = {}
 
-        while context.stream.base_stream.tell() < script_list_end_pos:
+        while context.stream.tell() < script_list_end_pos:
             nested_groups, nested_scripts = ScriptGroup.parse_script_list(context)
             script_groups.update(nested_groups)
             scripts.update(nested_scripts)
@@ -323,10 +323,10 @@ class PlayerScriptsList:
     @classmethod
     def parse(cls, context: "ParsingContext"):
         _, datasize = context.parse_asset_header()
-        player_script_list_end_pos = context.stream.base_stream.tell() + datasize
+        player_script_list_end_pos = context.stream.tell() + datasize
 
         script_lists = []
-        while context.stream.base_stream.tell() < player_script_list_end_pos:
+        while context.stream.tell() < player_script_list_end_pos:
             asset_name = context.parse_asset_name()
             if asset_name != "ScriptList":
                 raise ValueError(f"Expected ScriptList asset, got {asset_name}")

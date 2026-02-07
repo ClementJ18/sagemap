@@ -42,8 +42,8 @@ class ObjectsList:
     def parse(cls, context: "ParsingContext"):
         version, datasize = context.parse_asset_header()
         object_list = []
-        end_pos = context.stream.base_stream.tell() + datasize
-        while context.stream.base_stream.tell() < end_pos:
+        end_pos = context.stream.tell() + datasize
+        while context.stream.tell() < end_pos:
             asset_name = context.parse_asset_name()
             if asset_name != Object.asset_name:
                 raise ValueError(f"Expected {Object.asset_name} asset, got {asset_name}")
