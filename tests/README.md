@@ -1,6 +1,6 @@
 # Test Suite
 
-This directory contains unit tests for individual map parser assets, mirroring the structure of `map_parser/assets/`.
+This directory contains unit tests for individual map parser assets, mirroring the structure of `sagemap/assets/`.
 
 ## Structure
 

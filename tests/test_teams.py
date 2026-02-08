@@ -1,6 +1,6 @@
 """Test Teams asset parsing."""
 
-from map_parser.assets import Teams
+from sagemap.assets import Teams
 from .conftest import create_context, load_asset_bytes
 
 

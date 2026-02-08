@@ -1,1 +1,1 @@
-"""Test suite for map_parser assets."""
+"""Test suite for sagemap assets."""

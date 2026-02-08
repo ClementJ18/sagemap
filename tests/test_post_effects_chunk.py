@@ -1,6 +1,6 @@
 """Test PostEffectsChunk asset parsing."""
 
-from map_parser.assets import PostEffectsChunk
+from sagemap.assets import PostEffectsChunk
 from .conftest import create_context, load_asset_bytes
 
 

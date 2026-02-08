@@ -1,7 +1,7 @@
 """Test WaterSettings asset parsing."""
 import pytest 
 
-from map_parser.assets import WaterSettings
+from sagemap.assets import WaterSettings
 from .conftest import create_context, load_asset_bytes
 
 

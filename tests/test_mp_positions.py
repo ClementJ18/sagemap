@@ -1,6 +1,6 @@
 """Test MPPositionsList asset parsing."""
 
-from map_parser.assets import MPPositionsList
+from sagemap.assets import MPPositionsList
 from .conftest import create_context, load_asset_bytes
 
 

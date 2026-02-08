@@ -1,6 +1,6 @@
 """Test HeightMapData asset parsing."""
 
-from map_parser.assets import HeightMapData
+from sagemap.assets import HeightMapData
 from .conftest import create_context, load_asset_bytes
 
 

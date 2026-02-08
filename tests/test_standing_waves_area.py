@@ -1,6 +1,6 @@
 """Test StandingWaveAreas asset parsing."""
 
-from map_parser.assets import StandingWaveAreas
+from sagemap.assets import StandingWaveAreas
 from .conftest import create_context, load_asset_bytes
 
 

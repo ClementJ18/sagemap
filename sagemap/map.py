@@ -199,7 +199,7 @@ def parse_map(file: io.BufferedReader) -> Map:
     except Exception:
         decompressed_data = compressed_data
 
-    logger = logging.getLogger("map_parser")
+    logger = logging.getLogger("sagemap")
 
     stream = BinaryStream(io.BytesIO(decompressed_data))
     context = ParsingContext(stream)

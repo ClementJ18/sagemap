@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from map_parser.context import ParsingContext
+from sagemap.context import ParsingContext
 
 
 @dataclass

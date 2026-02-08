@@ -1,6 +1,6 @@
 """Test CameraAnimationList asset parsing."""
 
-from map_parser.assets import CameraAnimationList
+from sagemap.assets import CameraAnimationList
 from .conftest import create_context, load_asset_bytes
 
 

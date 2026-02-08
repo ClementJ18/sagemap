@@ -1,6 +1,6 @@
 """Test WorldInfo asset parsing."""
 
-from map_parser.assets import WorldInfo
+from sagemap.assets import WorldInfo
 from .conftest import create_context, load_asset_bytes
 
 

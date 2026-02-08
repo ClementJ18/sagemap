@@ -2,7 +2,7 @@
 
 import pytest
 from pathlib import Path
-from map_parser import parse_map_from_path
+from sagemap import parse_map_from_path
 
 
 def get_test_maps():

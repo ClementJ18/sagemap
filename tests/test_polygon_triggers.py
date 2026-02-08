@@ -1,7 +1,7 @@
 """Test PolygonTriggers asset parsing."""
 
 import pytest
-from map_parser.assets import PolygonTriggers
+from sagemap.assets import PolygonTriggers
 from .conftest import create_context, load_asset_bytes
 
 

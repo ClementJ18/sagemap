@@ -1,6 +1,6 @@
 """Test RiverAreas asset parsing."""
 
-from map_parser.assets import RiverAreas
+from sagemap.assets import RiverAreas
 from .conftest import create_context, load_asset_bytes
 
 

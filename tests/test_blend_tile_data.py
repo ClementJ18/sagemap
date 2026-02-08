@@ -1,6 +1,6 @@
 """Test BlendTileData asset parsing."""
 
-from map_parser.assets import BlendTileData, HeightMapData
+from sagemap.assets import BlendTileData, HeightMapData
 from .conftest import create_context, load_asset_bytes
 
 

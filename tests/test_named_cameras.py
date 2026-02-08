@@ -1,6 +1,6 @@
 """Test NamedCameras asset parsing."""
 
-from map_parser.assets import NamedCameras
+from sagemap.assets import NamedCameras
 from .conftest import create_context, load_asset_bytes
 
 

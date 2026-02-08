@@ -1,6 +1,6 @@
 """Test SidesList and BuildLists asset parsing."""
 
-from map_parser.assets import SidesList
+from sagemap.assets import SidesList
 from .conftest import create_context, load_asset_bytes
 
 

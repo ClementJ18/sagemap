@@ -1,6 +1,6 @@
 """Test GlobalLighting asset parsing."""
 
-from map_parser.assets import GlobalLighting
+from sagemap.assets import GlobalLighting
 from .conftest import create_context, load_asset_bytes
 
 

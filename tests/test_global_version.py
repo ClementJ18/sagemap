@@ -1,7 +1,7 @@
 """Test GlobalVersion asset parsing."""
 
 import pytest
-from map_parser.assets import GlobalVersion
+from sagemap.assets import GlobalVersion
 from .conftest import create_context, load_asset_bytes
 
     

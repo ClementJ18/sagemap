@@ -1,6 +1,6 @@
 """Test LibraryMapLists asset parsing."""
 
-from map_parser.assets import LibraryMapLists
+from sagemap.assets import LibraryMapLists
 from .conftest import create_context, load_asset_bytes
 
 

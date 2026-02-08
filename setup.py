@@ -3,7 +3,7 @@ import re
 from setuptools import find_packages, setup
 
 version = ""
-with open("map_parser/__init__.py") as f:
+with open("sagemap/__init__.py") as f:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)
 
 if not version:
@@ -14,10 +14,10 @@ with open("README.md") as f:
     readme = f.read()
 
 setup(
-    name="map_parser",
+    name="sagemap",
     version=version,
-    url="https://github.com/ClementJ18/map_parser",
-    packages=find_packages(include=["map_parser", "map_parser.*"]),
+    url="https://github.com/ClementJ18/sagemap",
+    packages=find_packages(include=["sagemap", "sagemap.*"]),
     description="A library for reading and writing .map files from SAGE engine games.",
     long_description_content_type="text/markdown",
     long_description=readme,

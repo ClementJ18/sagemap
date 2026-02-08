@@ -1,7 +1,7 @@
 """Test AssetList asset parsing."""
 
 import pytest
-from map_parser.assets import AssetList
+from sagemap.assets import AssetList
 from .conftest import create_context, load_asset_bytes
 
 @pytest.mark.skip(reason="No test data available for AssetList yet")

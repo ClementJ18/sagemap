@@ -1,4 +1,4 @@
-# map_parser
+# sagemap
 
 A python library for reading BFME .map files. Can potentially work with the map files of other SAGE games but might need to be adjusted. This implementation is not complete.
 

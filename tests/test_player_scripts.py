@@ -1,6 +1,6 @@
 """Test PlayerScriptsList asset parsing."""
 
-from map_parser.assets import PlayerScriptsList
+from sagemap.assets import PlayerScriptsList
 from .conftest import create_context, load_asset_bytes
 
 

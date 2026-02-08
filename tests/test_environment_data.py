@@ -1,6 +1,6 @@
 """Test EnvironmentData asset parsing."""
 
-from map_parser.assets import EnvironmentData
+from sagemap.assets import EnvironmentData
 from .conftest import create_context, load_asset_bytes
 
 
