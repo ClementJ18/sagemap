@@ -186,14 +186,12 @@ class Map:
             return obj
 
 
-def parse_map(path) -> Map:
-    with open(path, "rb") as f:
-        # skip ea refpack header
-        ea_compression = f.read(8)
-        if not ea_compression.startswith(b"EAR"):
-            f.seek(0)
+def parse_map(file: io.BufferedReader) -> Map:
+    ea_compression = file.read(8)
+    if not ea_compression.startswith(b"EAR"):
+        file.seek(0)
 
-        compressed_data = f.read()
+    compressed_data = file.read()
 
     try:
         decompressed_data = RefpackHandler().decompress_data(compressed_data)
@@ -210,3 +208,7 @@ def parse_map(path) -> Map:
     map.parse()
 
     return map
+
+def parse_map_from_path(path: str) -> Map:
+    with open(path, "rb") as file:
+        return parse_map(file)

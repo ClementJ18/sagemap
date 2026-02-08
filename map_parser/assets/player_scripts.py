@@ -91,11 +91,12 @@ class ScriptDerived:
 
 @dataclass
 class OrCondition:
+    version: int
     conditions: list[ScriptDerived]
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (_, datasize):
+        with context.read_asset() as (version, datasize):
             conditions = []
             condition_end_pos = context.stream.tell() + datasize
 
@@ -108,7 +109,7 @@ class OrCondition:
                 conditions.append(condition)
 
         context.logger.debug("Finished parsing OrCondition")
-        return cls(conditions=conditions)
+        return cls(version=version, conditions=conditions)
 
 
 @dataclass
@@ -239,6 +240,7 @@ class Script:
 
 @dataclass
 class ScriptGroup:
+    version: int
     name: str
     is_active: bool
     is_subroutine: bool
@@ -247,7 +249,7 @@ class ScriptGroup:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (_, datasize):
+        with context.read_asset() as (version, datasize):
             group_end_pos = context.stream.tell() + datasize
             name = context.stream.readUInt16PrefixedAsciiString()
             is_active = context.stream.readBool()
@@ -263,6 +265,7 @@ class ScriptGroup:
 
         context.logger.debug("Finished parsing ScriptGroup")
         return cls(
+            version=version,
             name=name,
             is_active=is_active,
             is_subroutine=is_subroutine,
@@ -317,11 +320,12 @@ class ScriptList:
 class PlayerScriptsList:
     asset_name = "PlayerScriptsList"
 
+    version: int
     script_lists: list[ScriptList]
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (_, datasize):
+        with context.read_asset() as (version, datasize):
             player_script_list_end_pos = context.stream.tell() + datasize
 
             script_lists = []
@@ -333,4 +337,4 @@ class PlayerScriptsList:
                 script_lists.append(ScriptList.parse(context))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(script_lists=script_lists)
+        return cls(version=version, script_lists=script_lists)
