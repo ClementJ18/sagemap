@@ -69,7 +69,6 @@ class BuildList:
 
     @classmethod
     def parse(cls, context: "ParsingContext", version: int, has_asset_list: bool):
-
         faction_name = None
         faction_name_property = None
         if has_asset_list:
@@ -86,7 +85,9 @@ class BuildList:
             f"Parsed BuildList with {len(build_list)} items for faction '{faction_name or faction_name_property}'"
         )
         return cls(
-            faction_name=faction_name, faction_name_property=faction_name_property, build_list=build_list
+            faction_name=faction_name,
+            faction_name_property=faction_name_property,
+            build_list=build_list,
         )
 
 
@@ -106,7 +107,7 @@ class BuildLists:
                 item = BuildList.parse(context, version, has_asset_list)
                 build_lists.append(item)
 
-        context.logger.debug(f"Finished parsing Side")
+        context.logger.debug("Finished parsing BuildLists")
         return cls(version, build_lists)
 
 

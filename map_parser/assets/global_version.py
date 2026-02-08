@@ -18,7 +18,7 @@ class GlobalVersion:
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version=version)
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             pass

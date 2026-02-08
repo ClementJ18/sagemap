@@ -104,7 +104,7 @@ class ParsingContext:
         asset_version = self.stream.readUInt16()
         datasize = self.stream.readUInt32()
         return asset_version, datasize
-    
+
     @contextmanager
     def read_asset(self):
         version, datasize = self.parse_asset_header()
@@ -115,9 +115,8 @@ class ParsingContext:
         end_pos = self.stream.tell()
         if end_pos - start_pos != datasize:
             raise ValueError(f"Asset data size mismatch: expected {datasize} bytes, read {end_pos - start_pos} bytes")
-        
-    
-    
+
+
 class WritingContext:
     def __init__(self, stream: BinaryStream):
         self.stream = stream

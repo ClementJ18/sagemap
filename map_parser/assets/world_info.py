@@ -1,7 +1,6 @@
-from map_parser.context import ParsingContext, Property
-
-
 from dataclasses import dataclass
+
+from map_parser.context import ParsingContext, Property
 
 
 @dataclass
@@ -18,4 +17,3 @@ class WorldInfo:
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(version, properties)
-    

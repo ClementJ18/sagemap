@@ -36,7 +36,11 @@ class RiverArea:
         noise_texture = context.stream.readUInt16PrefixedAsciiString()
         alpha_edge_texture = context.stream.readUInt16PrefixedAsciiString()
         sparkle_texture = context.stream.readUInt16PrefixedAsciiString()
-        color = (context.stream.readUChar(), context.stream.readUChar(), context.stream.readUChar())
+        color = (
+            context.stream.readUChar(),
+            context.stream.readUChar(),
+            context.stream.readUChar(),
+        )
 
         unused_color_a = context.stream.readUChar()
         if unused_color_a != 0:

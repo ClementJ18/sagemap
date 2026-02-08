@@ -1,17 +1,19 @@
-from dataclasses import asdict, is_dataclass
-from enum import Enum
 import base64
 import io
 import logging
+from dataclasses import asdict, is_dataclass
+from enum import Enum
 
 from reversebox.compression.compression_refpack import RefpackHandler
 
 from .assets import (
     AssetList,
+    BlendTileData,
     BuildLists,
     CameraAnimationList,
     EnvironmentData,
     GlobalLighting,
+    GlobalVersion,
     HeightMapData,
     LibraryMapLists,
     MPPositionsList,
@@ -25,13 +27,11 @@ from .assets import (
     SkippedAsset,
     StandingWaterAreas,
     StandingWaveAreas,
+    Teams,
     TriggerAreas,
     WaterSettings,
+    WaypointsList,
     WorldInfo,
-    Teams,
-    GlobalVersion,
-    BlendTileData,
-    WaypointsList
 )
 from .context import ParsingContext
 from .stream import BinaryStream
@@ -60,6 +60,10 @@ class Map:
     named_cameras: NamedCameras
     camera_animation_list: CameraAnimationList
     library_map_lists: LibraryMapLists
+    teams: Teams
+    mp_positions_list: MPPositionsList
+
+    skipped_assets: dict[str, SkippedAsset]
 
     def __init__(self, context: ParsingContext = None):
         self.context = context
@@ -157,29 +161,26 @@ class Map:
     def to_dict(self):
         """Convert Map and all assets to a JSON-serializable dictionary"""
         result = {}
-        
+
         for key, value in self.__dict__.items():
-            if key == 'context':  # Skip the parsing context
+            if key == "context":  # Skip the parsing context
                 continue
             result[key] = self._serialize(value)
-        
+
         return result
-    
+
     def _serialize(self, obj):
         """Recursively serialize objects to JSON-compatible types"""
         if obj is None:
             return None
         elif isinstance(obj, bytes):
-            return base64.b64encode(obj).decode('ascii')
+            return base64.b64encode(obj).decode("ascii")
         elif isinstance(obj, Enum):
             return obj.value
         elif is_dataclass(obj):
             return {k: self._serialize(v) for k, v in asdict(obj).items()}
         elif isinstance(obj, dict):
-            return {
-                (k.name if isinstance(k, Enum) else k): self._serialize(v) 
-                for k, v in obj.items()
-            }
+            return {(k.name if isinstance(k, Enum) else k): self._serialize(v) for k, v in obj.items()}
         elif isinstance(obj, (list, tuple)):
             return [self._serialize(item) for item in obj]
         else:
@@ -208,6 +209,7 @@ def parse_map(file: io.BufferedReader) -> Map:
     map.parse()
 
     return map
+
 
 def parse_map_from_path(path: str) -> Map:
     with open(path, "rb") as file:

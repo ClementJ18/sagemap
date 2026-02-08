@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 class TileFlammability(IntEnum):
     """Enum for tile flammability values."""
+
     FIRE_RESISTANT = 0
     GRASS = 1
     HIGHLY_FLAMMABLE = 2
@@ -18,6 +19,7 @@ class TileFlammability(IntEnum):
 @dataclass
 class BlendTileTexture:
     """Represents a blend tile texture (inline data structure, not an asset)."""
+
     cell_start: int
     cell_count: int
     cell_size: int
@@ -25,28 +27,34 @@ class BlendTileTexture:
     name: str
 
     @classmethod
-    def parse(cls, context: 'ParsingContext'):
+    def parse(cls, context: "ParsingContext"):
         """Parse inline (no asset header)."""
         cell_start = context.stream.readUInt32()
         cell_count = context.stream.readUInt32()
         cell_size = context.stream.readUInt32()
-        
+
         if cell_size * cell_size != cell_count:
             raise ValueError(f"Invalid cell_size: {cell_size}^2 != {cell_count}")
-        
+
         magic_value = context.stream.readUInt32()
         if magic_value != 0:
             raise ValueError(f"Expected magic_value to be 0, got: {magic_value}")
-        
+
         name = context.stream.readUInt16PrefixedAsciiString()
-        
-        return cls(cell_start=cell_start, cell_count=cell_count, cell_size=cell_size, 
-                   magic_value=magic_value, name=name)
+
+        return cls(
+            cell_start=cell_start,
+            cell_count=cell_count,
+            cell_size=cell_size,
+            magic_value=magic_value,
+            name=name,
+        )
 
 
 @dataclass
 class BlendDescription:
     """Represents a blend description (inline data structure, not an asset)."""
+
     secondary_texture_tile: int
     raw_blend_direction: bytes
     flags: int
@@ -54,28 +62,33 @@ class BlendDescription:
     magic_value1: int
 
     @classmethod
-    def parse(cls, context: 'ParsingContext', version: int):
+    def parse(cls, context: "ParsingContext", version: int):
         """Parse inline (no asset header)."""
         secondary_texture_tile = context.stream.readUInt32()
         raw_blend_direction = context.stream.readBytes(4)
         flags = context.stream.readUChar()
         two_sided = context.stream.readBool()
-        
+
         magic_value1 = context.stream.readUInt32()
         # MagicValue1 can be 0xFFFFFFFF or 24
-        
+
         magic_value2 = context.stream.readUInt32()
         if magic_value2 != 0x7ADA0000:
             raise ValueError(f"Expected magic_value2 to be 0x7ADA0000, got: {magic_value2:#x}")
-        
-        return cls(secondary_texture_tile=secondary_texture_tile, 
-                   raw_blend_direction=raw_blend_direction,
-                   flags=flags, two_sided=two_sided, magic_value1=magic_value1)
+
+        return cls(
+            secondary_texture_tile=secondary_texture_tile,
+            raw_blend_direction=raw_blend_direction,
+            flags=flags,
+            two_sided=two_sided,
+            magic_value1=magic_value1,
+        )
 
 
 @dataclass
 class CliffTextureMapping:
     """Represents a cliff texture mapping (inline data structure, not an asset)."""
+
     texture_tile: int
     bottom_left_coords: tuple[float, float]
     bottom_right_coords: tuple[float, float]
@@ -84,24 +97,26 @@ class CliffTextureMapping:
     unknown2: int
 
     @classmethod
-    def parse(cls, context: 'ParsingContext'):
+    def parse(cls, context: "ParsingContext"):
         """Parse inline (no asset header)."""
         texture_tile = context.stream.readUInt32()
-        
+
         # Read 4 Vector2s (each is 2 floats)
         bottom_left_coords = context.stream.readVector2()
         bottom_right_coords = context.stream.readVector2()
         top_right_coords = context.stream.readVector2()
         top_left_coords = context.stream.readVector2()
-        
+
         unknown2 = context.stream.readUInt16()
-        
-        return cls(texture_tile=texture_tile, 
-                   bottom_left_coords=bottom_left_coords,
-                   bottom_right_coords=bottom_right_coords,
-                   top_right_coords=top_right_coords,
-                   top_left_coords=top_left_coords,
-                   unknown2=unknown2)
+
+        return cls(
+            texture_tile=texture_tile,
+            bottom_left_coords=bottom_left_coords,
+            bottom_right_coords=bottom_right_coords,
+            top_right_coords=top_right_coords,
+            top_left_coords=top_left_coords,
+            unknown2=unknown2,
+        )
 
 
 def get_blend_bit_size(version: int) -> int:
@@ -117,7 +132,7 @@ def get_blend_bit_size(version: int) -> int:
 @dataclass
 class BlendTileData:
     asset_name = "BlendTileData"
-    
+
     tiles: list[list[int]]
     blends: list[list[int]]
     three_way_blends: list[list[int]]
@@ -140,22 +155,22 @@ class BlendTileData:
     magic_value2: int
     blend_descriptions: list[BlendDescription]
     cliff_texture_mappings: list[CliffTextureMapping]
-    
+
     @classmethod
-    def parse(cls, context: 'ParsingContext', height_map_data: 'HeightMapData'):
+    def parse(cls, context: "ParsingContext", height_map_data: "HeightMapData"):
         with context.read_asset() as (version, datasize):
             start_pos = context.stream.tell()
             end_pos = start_pos + datasize
 
             if version < 6:
                 raise ValueError(f"Unsupported BlendTileData version: {version}")
-        
+
             if height_map_data is None:
                 raise ValueError("Expected HeightMapData asset before BlendTileData asset.")
-            
+
             width = height_map_data.width
             height = height_map_data.height
-            
+
             tiles_count = context.stream.readUInt32()
             if tiles_count != width * height:
                 raise ValueError(f"Invalid tiles_count: {tiles_count}, expected: {width * height}")
@@ -179,11 +194,15 @@ class BlendTileData:
 
             impassability_to_players = None
             if version >= 10:
-                impassability_to_players = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
+                impassability_to_players = context.stream.readSingleBitBooleanArray2D(
+                    height_map_data.width, height_map_data.height
+                )
 
             passage_widths = None
             if version >= 11:
-                passage_widths = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
+                passage_widths = context.stream.readSingleBitBooleanArray2D(
+                    height_map_data.width, height_map_data.height
+                )
 
             taintability = None
             if version >= 14 and version < 25:
@@ -191,11 +210,15 @@ class BlendTileData:
 
             extra_passability = None
             if version >= 15:
-                extra_passability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
+                extra_passability = context.stream.readSingleBitBooleanArray2D(
+                    height_map_data.width, height_map_data.height
+                )
 
             flammability = None
             if version >= 16 and version < 25:
-                flammability = context.stream.readByteArray2DAsEnum(height_map_data.width, height_map_data.height, TileFlammability)
+                flammability = context.stream.readByteArray2DAsEnum(
+                    height_map_data.width, height_map_data.height, TileFlammability
+                )
 
             visibility = None
             if version >= 17:
@@ -208,12 +231,18 @@ class BlendTileData:
             if version >= 24:
                 # TODO: Are these in the right order?
                 buildability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
-                impassability_to_air_units = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
-                tiberium_growability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
+                impassability_to_air_units = context.stream.readSingleBitBooleanArray2D(
+                    height_map_data.width, height_map_data.height
+                )
+                tiberium_growability = context.stream.readSingleBitBooleanArray2D(
+                    height_map_data.width, height_map_data.height
+                )
 
             dynamic_shrubbery_density = None
             if version >= 25:
-                dynamic_shrubbery_density = context.stream.readByteArray2D(height_map_data.width, height_map_data.height)
+                dynamic_shrubbery_density = context.stream.readByteArray2D(
+                    height_map_data.width, height_map_data.height
+                )
 
             texture_cell_count = context.stream.readUInt32()
 
@@ -228,12 +257,11 @@ class BlendTileData:
             if cliff_blends_count > 0:
                 # Usually minimum value is 1, but some files (perhaps Generals, not Zero Hour?) have 0.
                 cliff_blends_count -= 1
-            
+
             texture_count = context.stream.readUInt32()
             textures = []
             for i in range(texture_count):
                 textures.append(BlendTileTexture.parse(context))
-                
 
             # Can be a variety of values, don't know what it means.
             magic_value1 = context.stream.readUInt32()
@@ -275,4 +303,3 @@ class BlendTileData:
             blend_descriptions=blend_descriptions,
             cliff_texture_mappings=cliff_texture_mappings,
         )
-

@@ -67,7 +67,11 @@ class PolygonTrigger:
             bump_map_texture = context.stream.readUInt16PrefixedAsciiString()
             sky_texture = context.stream.readUInt16PrefixedAsciiString()
             use_additive_blending = context.stream.readBool()
-            river_color = (context.stream.readUChar(), context.stream.readUChar(), context.stream.readUChar())
+            river_color = (
+                context.stream.readUChar(),
+                context.stream.readUChar(),
+                context.stream.readUChar(),
+            )
             unknown = context.stream.readUChar()
             uv_scroll_speed = context.stream.readVector2()
             river_alpha = context.stream.readFloat()
@@ -76,7 +80,11 @@ class PolygonTrigger:
         points = []
         for _ in range(point_count):
             points.append(
-                (context.stream.readInt32(), context.stream.readInt32(), context.stream.readInt32())
+                (
+                    context.stream.readInt32(),
+                    context.stream.readInt32(),
+                    context.stream.readInt32(),
+                )
             )
 
         return cls(

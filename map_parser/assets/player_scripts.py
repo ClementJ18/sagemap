@@ -274,7 +274,9 @@ class ScriptGroup:
         )
 
     @staticmethod
-    def parse_script_list(context: "ParsingContext") -> tuple[dict[str, "ScriptGroup"], dict[str, Script]]:
+    def parse_script_list(
+        context: "ParsingContext",
+    ) -> tuple[dict[str, "ScriptGroup"], dict[str, Script]]:
         script_groups = {}
         scripts = {}
         asset_name = context.parse_asset_name()

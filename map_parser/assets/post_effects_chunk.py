@@ -30,9 +30,7 @@ class PostEffectParameter:
         elif param_type == "Texture":
             data = context.stream.readUInt16PrefixedAsciiString()
         else:
-            raise ValueError(
-                f"Unknown effect parameter type '{param_type}' for parameter name '{param_name}'."
-            )
+            raise ValueError(f"Unknown effect parameter type '{param_type}' for parameter name '{param_name}'.")
 
         return cls(name=param_name, type=param_type, value=data)
 

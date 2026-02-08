@@ -1,7 +1,6 @@
-from map_parser.context import ParsingContext
-
-
 from dataclasses import dataclass
+
+from map_parser.context import ParsingContext
 
 
 @dataclass

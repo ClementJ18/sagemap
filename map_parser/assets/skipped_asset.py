@@ -22,9 +22,3 @@ class SkippedAsset:
 
         context.logger.debug(f"Skipped asset: {name}, Version: {version}, Data Size: {datasize} bytes")
         return cls(version, datasize, data, name)
-
-
-
-
-
-
