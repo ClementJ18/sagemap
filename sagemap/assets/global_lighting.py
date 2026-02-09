@@ -117,6 +117,7 @@ class GlobalLightingConfiguration:
 class GlobalLighting:
     asset_name = "GlobalLighting"
 
+    version: int
     time_of_the_day: TimeOfTheDay
     lighting_configurations: dict[TimeOfTheDay, GlobalLightingConfiguration]
     shadow_color: MapColorArgb
@@ -124,34 +125,37 @@ class GlobalLighting:
     unknown2: tuple[float, float, float] | None
     unknown3: MapColorArgb | None
     no_cloud_factor: tuple[float, float, float] | None
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (version, _):
+        with context.read_asset() as asset_ctx:
             time = TimeOfTheDay(context.stream.readUInt32())
             lighting_configurations = {}
 
             for member in TimeOfTheDay:
-                lighting_configurations[member] = GlobalLightingConfiguration.parse(context, version)
+                lighting_configurations[member] = GlobalLightingConfiguration.parse(context, asset_ctx.version)
 
             shadow_color = MapColorArgb.parse(context)
 
             unknown = None
-            if version >= 7 and version < 11:
-                unknown = context.stream.readBytes(4 if version >= 9 else 44)
+            if asset_ctx.version >= 7 and asset_ctx.version < 11:
+                unknown = context.stream.readBytes(4 if asset_ctx.version >= 9 else 44)
 
             unknown2 = None
             unknown3 = None
-            if version >= 12:
+            if asset_ctx.version >= 12:
                 unknown2 = context.stream.readVector3()
                 unknown3 = MapColorArgb.parse(context)
 
             no_cloud_factor = None
-            if version >= 8:
+            if asset_ctx.version >= 8:
                 no_cloud_factor = context.stream.readVector3()
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(
+            version=asset_ctx.version,
             time_of_the_day=time,
             lighting_configurations=lighting_configurations,
             shadow_color=shadow_color,
@@ -159,4 +163,6 @@ class GlobalLighting:
             unknown2=unknown2,
             unknown3=unknown3,
             no_cloud_factor=no_cloud_factor,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
         )

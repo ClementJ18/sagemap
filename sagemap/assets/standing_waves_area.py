@@ -103,15 +103,17 @@ class StandingWaveAreas:
 
     version: int
     areas: list[StandingWaveArea]
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (version, _):
+        with context.read_asset() as asset_ctx:
             area_count = context.stream.readUInt32()
             areas = []
 
             for _ in range(area_count):
-                areas.append(StandingWaveArea.parse(context, version))
+                areas.append(StandingWaveArea.parse(context, asset_ctx.version))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version=version, areas=areas)
+        return cls(version=asset_ctx.version, areas=areas, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)

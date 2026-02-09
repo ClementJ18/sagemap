@@ -115,20 +115,22 @@ class PolygonTriggers:
 
     version: int
     polygon_triggers: list[PolygonTrigger]
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (version, _):
+        with context.read_asset() as asset_ctx:
             polygon_triggers = []
 
             trigger_count = context.stream.readUInt32()
             max_trigger_id = 0
             for _ in range(trigger_count):
-                trigger = PolygonTrigger.parse(context, version)
+                trigger = PolygonTrigger.parse(context, asset_ctx.version)
                 polygon_triggers.append(trigger)
 
                 if trigger.trigger_id > max_trigger_id:
                     max_trigger_id = trigger.trigger_id
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version, polygon_triggers)
+        return cls(asset_ctx.version, polygon_triggers, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)

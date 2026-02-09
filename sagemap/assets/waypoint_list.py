@@ -9,10 +9,12 @@ class WaypointsList:
 
     version: int
     waypoint_paths: list[tuple[int, int]]
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (version, _):
+        with context.read_asset() as asset_ctx:
             waypoint_paths = []
             waypoint_count = context.stream.readUInt32()
             for _ in range(waypoint_count):
@@ -22,4 +24,4 @@ class WaypointsList:
                 waypoint_paths.append((start_waypoint_id, end_waypoint_id))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version, waypoint_paths)
+        return cls(asset_ctx.version, waypoint_paths, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)

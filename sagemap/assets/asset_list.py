@@ -25,12 +25,14 @@ class AssetList:
 
     version: int
     asset_names: list[AssetListItem]
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (version, _):
+        with context.read_asset() as asset_ctx:
             asset_count = context.stream.readUInt32()
             asset_names = [AssetListItem.parse(context) for _ in range(asset_count)]
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version, asset_names)
+        return cls(asset_ctx.version, asset_names, asset_ctx.start_pos, asset_ctx.end_pos)

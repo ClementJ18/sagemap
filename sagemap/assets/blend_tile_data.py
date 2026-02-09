@@ -133,6 +133,7 @@ def get_blend_bit_size(version: int) -> int:
 class BlendTileData:
     asset_name = "BlendTileData"
 
+    version: int
     tiles: list[list[int]]
     blends: list[list[int]]
     three_way_blends: list[list[int]]
@@ -155,15 +156,14 @@ class BlendTileData:
     magic_value2: int
     blend_descriptions: list[BlendDescription]
     cliff_texture_mappings: list[CliffTextureMapping]
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext", height_map_data: "HeightMapData"):
-        with context.read_asset() as (version, datasize):
-            start_pos = context.stream.tell()
-            end_pos = start_pos + datasize
-
-            if version < 6:
-                raise ValueError(f"Unsupported BlendTileData version: {version}")
+        with context.read_asset() as asset_ctx:
+            if asset_ctx.version < 6:
+                raise ValueError(f"Unsupported BlendTileData version: {asset_ctx.version}")
 
             if height_map_data is None:
                 raise ValueError("Expected HeightMapData asset before BlendTileData asset.")
@@ -177,15 +177,15 @@ class BlendTileData:
 
             tiles = context.stream.readUInt16Array2D(width, height)
 
-            blend_bit_size = get_blend_bit_size(version)
+            blend_bit_size = get_blend_bit_size(asset_ctx.version)
             blends = context.stream.readUIntArray2D(width, height, blend_bit_size)
             three_way_blends = context.stream.readUIntArray2D(width, height, blend_bit_size)
             cliff_textures = context.stream.readUIntArray2D(width, height, blend_bit_size)
 
             impassability = None
-            if version > 6:
+            if asset_ctx.version > 6:
                 passability_width = height_map_data.width
-                if version == 7:
+                if asset_ctx.version == 7:
                     # C&C Generals clips partial bytes from each row of passability data
                     passability_width = ((passability_width + 1) // 8) * 8
 
@@ -193,42 +193,42 @@ class BlendTileData:
                 impassability = context.stream.readSingleBitBooleanArray2D(passability_width, height_map_data.height)
 
             impassability_to_players = None
-            if version >= 10:
+            if asset_ctx.version >= 10:
                 impassability_to_players = context.stream.readSingleBitBooleanArray2D(
                     height_map_data.width, height_map_data.height
                 )
 
             passage_widths = None
-            if version >= 11:
+            if asset_ctx.version >= 11:
                 passage_widths = context.stream.readSingleBitBooleanArray2D(
                     height_map_data.width, height_map_data.height
                 )
 
             taintability = None
-            if version >= 14 and version < 25:
+            if asset_ctx.version >= 14 and asset_ctx.version < 25:
                 taintability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
 
             extra_passability = None
-            if version >= 15:
+            if asset_ctx.version >= 15:
                 extra_passability = context.stream.readSingleBitBooleanArray2D(
                     height_map_data.width, height_map_data.height
                 )
 
             flammability = None
-            if version >= 16 and version < 25:
+            if asset_ctx.version >= 16 and asset_ctx.version < 25:
                 flammability = context.stream.readByteArray2DAsEnum(
                     height_map_data.width, height_map_data.height, TileFlammability
                 )
 
             visibility = None
-            if version >= 17:
+            if asset_ctx.version >= 17:
                 # Note: All ReadSingleBitBooleanArray2D calls in C# use row-byte-alignment
                 visibility = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
 
             buildability = None
             impassability_to_air_units = None
             tiberium_growability = None
-            if version >= 24:
+            if asset_ctx.version >= 24:
                 # TODO: Are these in the right order?
                 buildability = context.stream.readSingleBitBooleanArray2D(height_map_data.width, height_map_data.height)
                 impassability_to_air_units = context.stream.readSingleBitBooleanArray2D(
@@ -239,7 +239,7 @@ class BlendTileData:
                 )
 
             dynamic_shrubbery_density = None
-            if version >= 25:
+            if asset_ctx.version >= 25:
                 dynamic_shrubbery_density = context.stream.readByteArray2D(
                     height_map_data.width, height_map_data.height
                 )
@@ -272,7 +272,7 @@ class BlendTileData:
 
             blend_descriptions = []
             for _ in range(blends_count):
-                blend_descriptions.append(BlendDescription.parse(context, version))
+                blend_descriptions.append(BlendDescription.parse(context, asset_ctx.version))
 
             cliff_texture_mappings = []
             for _ in range(cliff_blends_count):
@@ -280,6 +280,7 @@ class BlendTileData:
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
         return cls(
+            version=asset_ctx.version,
             tiles=tiles,
             blends=blends,
             three_way_blends=three_way_blends,
@@ -302,4 +303,6 @@ class BlendTileData:
             magic_value2=magic_value2,
             blend_descriptions=blend_descriptions,
             cliff_texture_mappings=cliff_texture_mappings,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
         )

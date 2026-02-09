@@ -1,7 +1,9 @@
 """Test full map parsing for all maps in tests/data/maps/."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from sagemap import parse_map_from_path
 
 
@@ -16,7 +18,7 @@ def get_test_maps():
 @pytest.mark.parametrize("map_path", get_test_maps(), ids=lambda p: p.name)
 def test_parse_map(map_path):
     """Test full parsing of individual map files.
-    
+
     This test ensures that each map in the test data directory can be:
     1. Successfully parsed without errors
     2. Produces a valid Map object
@@ -24,10 +26,10 @@ def test_parse_map(map_path):
     """
     # Parse the map
     map_obj = parse_map_from_path(str(map_path))
-    
+
     # Verify we got a valid map object
     assert map_obj is not None, f"Failed to parse map: {map_path.name}"
-    
+
     # Verify the map can be converted to dict (tests serialization)
     map_dict = map_obj.to_dict()
     assert map_dict is not None, f"Failed to convert map to dict: {map_path.name}"

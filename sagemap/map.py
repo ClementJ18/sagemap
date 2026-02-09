@@ -11,11 +11,15 @@ from .assets import (
     BlendTileData,
     BuildLists,
     CameraAnimationList,
+    CastleTemplates,
     EnvironmentData,
+    FogSettings,
     GlobalLighting,
     GlobalVersion,
     HeightMapData,
     LibraryMapLists,
+    MissionHotSpots,
+    MissionObjectives,
     MPPositionsList,
     NamedCameras,
     ObjectsList,
@@ -24,7 +28,7 @@ from .assets import (
     PostEffectsChunk,
     RiverAreas,
     SidesList,
-    SkippedAsset,
+    SkyboxSettings,
     StandingWaterAreas,
     StandingWaveAreas,
     Teams,
@@ -62,8 +66,11 @@ class Map:
     library_map_lists: LibraryMapLists
     teams: Teams
     mp_positions_list: MPPositionsList
-
-    skipped_assets: dict[str, SkippedAsset]
+    fog_settings: FogSettings
+    mission_hotspots: MissionHotSpots
+    mission_objectives: MissionObjectives
+    castle_templates: CastleTemplates
+    skybox_settings: SkyboxSettings
 
     def __init__(self, context: ParsingContext = None):
         self.context = context
@@ -95,8 +102,11 @@ class Map:
         self.named_cameras = None
         self.camera_animation_list = None
         self.library_map_lists = None
-
-        self.skipped_assets = {}
+        self.fog_settings = None
+        self.mission_hotspots = None
+        self.mission_objectives = None
+        self.castle_templates = None
+        self.skybox_settings = None
 
     def parse(self):
         self.assets = self.context.parse_assets()
@@ -154,9 +164,18 @@ class Map:
             self.camera_animation_list = CameraAnimationList.parse(self.context)
         elif asset_name == LibraryMapLists.asset_name:
             self.library_map_lists = LibraryMapLists.parse(self.context)
+        elif asset_name == FogSettings.asset_name:
+            self.fog_settings = FogSettings.parse(self.context)
+        elif asset_name == MissionHotSpots.asset_name:
+            self.mission_hotspots = MissionHotSpots.parse(self.context)
+        elif asset_name == MissionObjectives.asset_name:
+            self.mission_objectives = MissionObjectives.parse(self.context)
+        elif asset_name == CastleTemplates.asset_name:
+            self.castle_templates = CastleTemplates.parse(self.context)
+        elif asset_name == SkyboxSettings.asset_name:
+            self.skybox_settings = SkyboxSettings.parse(self.context)
         else:
-            self.context.logger.debug(f"Unknown asset: {asset_name}, skipping")
-            self.skipped_assets[asset_name] = SkippedAsset.parse(self.context, asset_name)
+            raise ValueError(f"Unknown asset: {asset_name}")
 
     def to_dict(self):
         """Convert Map and all assets to a JSON-serializable dictionary"""

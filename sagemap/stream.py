@@ -34,6 +34,16 @@ class BinaryStream:
     def readBool(self) -> bool:
         return self.unpack("?")
 
+    def readBoolChecked(self) -> bool:
+        """Read a boolean and validate it's exactly 0 or 1 (matching C# ReadBooleanChecked)"""
+        value = self.readUChar()
+        if value == 0:
+            return False
+        elif value == 1:
+            return True
+        else:
+            raise ValueError(f"Invalid boolean value: {value}, expected 0 or 1")
+
     def writeBool(self, value: bool):
         self.pack("?", value)
 
@@ -46,57 +56,68 @@ class BinaryStream:
 
         return result
 
+    def readBoolUInt32Checked(self) -> bool:
+        """Read a boolean stored as UInt32 with validation (matching C# ReadBooleanUInt32Checked)"""
+        result = self.readBoolChecked()
+        unused = self.readUInt24()  # padding
+
+        if unused != 0:
+            raise ValueError(f"Expected padding bytes to be zero, got: {unused:06x}")
+
+        return result
+
     def writeBoolUInt32(self, value: bool):
         self.writeBool(value)
         self.writeUInt24(0)
 
     def readInt16(self) -> int:
-        return self.unpack("h", 2)
+        return self.unpack("<h", 2)
 
     def writeInt16(self, value: int):
-        self.pack("h", value)
+        self.pack("<h", value)
 
     def readUInt16(self) -> int:
-        return self.unpack("H", 2)
+        return self.unpack("<H", 2)
 
     def writeUInt16(self, value: int):
-        self.pack("H", value)
+        self.pack("<H", value)
 
     def readInt32(self) -> int:
-        return self.unpack("i", 4)
+        return self.unpack("<i", 4)
 
     def writeInt32(self, value: int):
-        self.pack("i", value)
+        self.pack("<i", value)
 
     def readUInt32(self) -> int:
-        return self.unpack("I", 4)
+        return self.unpack("<I", 4)
 
     def writeUInt32(self, value: int):
-        self.pack("I", value)
+        self.pack("<I", value)
 
     def readInt64(self) -> int:
-        return self.unpack("q", 8)
+        return self.unpack("<q", 8)
 
     def writeInt64(self, value: int):
-        self.pack("q", value)
+        self.pack("<q", value)
 
     def readUInt64(self) -> int:
-        return self.unpack("Q", 8)
+        return self.unpack("<Q", 8)
 
     def writeUInt64(self, value: int):
-        self.pack("Q", value)
+        self.pack("<Q", value)
 
+    # In the C# code this is readSingle()
     def readFloat(self) -> float:
-        return self.unpack("f", 4)
+        return self.unpack("<f", 4)
 
     def writeFloat(self, value: float):
-        self.pack("f", value)
+        self.pack("<f", value)
 
     def readDouble(self) -> float:
-        return self.unpack("d", 8)
+        return self.unpack("<d", 8)
 
     def writeDouble(self, value: float):
-        self.pack("d", value)
+        self.pack("<d", value)
 
     def readVector2(self) -> tuple[float, float]:
         return (self.readFloat(), self.readFloat())
@@ -237,12 +258,6 @@ class BinaryStream:
             for x in range(width):
                 result[x][y] = enum_class(self.readUChar())
         return result
-
-    def readSingle(self):
-        return self.unpack("f", 4)
-
-    def writeSingle(self, value: float):
-        self.pack("f", value)
 
     def pack(self, fmt, data):
         return self.writeBytes(struct.pack(fmt, data))

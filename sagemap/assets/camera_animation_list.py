@@ -156,14 +156,18 @@ class CameraAnimationList:
 
     version: int
     animations: list[CameraAnimation]
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (version, _):
+        with context.read_asset() as asset_ctx:
             animations = []
             animation_count = context.stream.readUInt32()
             for _ in range(animation_count):
                 animations.append(CameraAnimation.parse(context))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version=version, animations=animations)
+        return cls(
+            version=asset_ctx.version, animations=animations, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos
+        )

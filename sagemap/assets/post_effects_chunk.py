@@ -71,14 +71,21 @@ class PostEffectsChunk:
 
     version: int
     post_effects: list[PostEffect]
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (version, _):
-            post_effects_count = context.stream.readUInt32() if version >= 2 else context.stream.readUChar()
+        with context.read_asset() as asset_ctx:
+            post_effects_count = context.stream.readUInt32() if asset_ctx.version >= 2 else context.stream.readUChar()
             post_effects = []
             for _ in range(post_effects_count):
-                post_effects.append(PostEffect.parse(context, version))
+                post_effects.append(PostEffect.parse(context, asset_ctx.version))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version=version, post_effects=post_effects)
+        return cls(
+            version=asset_ctx.version,
+            post_effects=post_effects,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )

@@ -30,7 +30,7 @@ class RiverArea:
         unique_id = context.stream.readUInt32()
         name = context.stream.readUInt16PrefixedAsciiString()
         layer_name = context.stream.readUInt16PrefixedAsciiString()
-        uv_scroll_speed = context.stream.readSingle()
+        uv_scroll_speed = context.stream.readFloat()
         use_additive_blending = context.stream.readBool()
         river_texture = context.stream.readUInt16PrefixedAsciiString()
         noise_texture = context.stream.readUInt16PrefixedAsciiString()
@@ -46,7 +46,7 @@ class RiverArea:
         if unused_color_a != 0:
             raise ValueError(f"Expected unused color alpha to be 0, got {unused_color_a}")
 
-        alpha = context.stream.readSingle()
+        alpha = context.stream.readFloat()
         water_height = context.stream.readUInt32()
 
         river_type = None
@@ -86,14 +86,16 @@ class RiverAreas:
 
     version: int
     areas: list[RiverArea]
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (version, _):
+        with context.read_asset() as asset_ctx:
             river_area_count = context.stream.readUInt32()
             areas = []
             for _ in range(river_area_count):
-                areas.append(RiverArea.parse(context, version))
+                areas.append(RiverArea.parse(context, asset_ctx.version))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version, areas)
+        return cls(asset_ctx.version, areas, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)

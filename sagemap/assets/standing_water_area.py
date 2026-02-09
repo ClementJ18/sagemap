@@ -26,7 +26,7 @@ class StandingWaterArea:
         unique_id = context.stream.readUInt32()
         name = context.stream.readUInt16PrefixedAsciiString()
         layer_name = context.stream.readUInt16PrefixedAsciiString()
-        uv_scroll_speed = context.stream.readSingle()
+        uv_scroll_speed = context.stream.readFloat()
         use_adaptive_blending = context.stream.readBool()
         bump_map_texture = context.stream.readUInt16PrefixedAsciiString()
         sky_texture = context.stream.readUInt16PrefixedAsciiString()
@@ -61,10 +61,12 @@ class StandingWaterAreas:
 
     version: int
     areas: list[StandingWaterArea]
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (version, _):
+        with context.read_asset() as asset_ctx:
             area_count = context.stream.readUInt32()
             areas = []
 
@@ -72,4 +74,4 @@ class StandingWaterAreas:
                 areas.append(StandingWaterArea.parse(context))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version, areas)
+        return cls(asset_ctx.version, areas, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)

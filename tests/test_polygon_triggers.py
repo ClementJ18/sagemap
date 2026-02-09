@@ -1,7 +1,9 @@
 """Test PolygonTriggers asset parsing."""
 
 import pytest
+
 from sagemap.assets import PolygonTriggers
+
 from .conftest import create_context, load_asset_bytes
 
 
@@ -9,7 +11,7 @@ from .conftest import create_context, load_asset_bytes
 def test_polygon_triggers():
     """Test PolygonTriggers asset parsing."""
     asset_bytes = load_asset_bytes("PolygonTriggers")
-    
+
     context = create_context(asset_bytes)
     result = PolygonTriggers.parse(context)
     assert result is not None

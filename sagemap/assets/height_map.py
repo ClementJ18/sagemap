@@ -18,10 +18,12 @@ class HeightMapData:
     min_height: int
     max_height: int
     elevations: list[list[int]]
+    start_pos: int
+    end_pos: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as (version, _):
+        with context.read_asset() as asset_ctx:
             width = context.stream.readUInt32()
             height = context.stream.readUInt32()
             border_width = context.stream.readUInt32()
@@ -29,7 +31,7 @@ class HeightMapData:
             border_count = context.stream.readUInt32()
             borders = []
             for _ in range(border_count):
-                if version >= 6:
+                if asset_ctx.version >= 6:
                     corner1X = context.stream.readUInt32()
                     corner1Y = context.stream.readUInt32()
                     x = context.stream.readUInt32()
@@ -51,7 +53,7 @@ class HeightMapData:
             elevations = [[0 for _ in range(width)] for _ in range(height)]
             for y in range(height):
                 for x in range(width):
-                    if version >= 5:
+                    if asset_ctx.version >= 5:
                         elevation = context.stream.readUInt16()
                     else:
                         elevation = context.stream.readUChar()
@@ -62,4 +64,16 @@ class HeightMapData:
                         max_height = elevation
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version, width, height, border_width, borders, area, min_height, max_height, elevations)
+        return cls(
+            asset_ctx.version,
+            width,
+            height,
+            border_width,
+            borders,
+            area,
+            min_height,
+            max_height,
+            elevations,
+            asset_ctx.start_pos,
+            asset_ctx.end_pos,
+        )

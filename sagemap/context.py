@@ -1,7 +1,8 @@
 import logging
 from contextlib import contextmanager
+from dataclasses import dataclass
 from enum import IntEnum
-from typing import TypedDict
+from typing import Iterator, TypedDict
 
 from .stream import BinaryStream
 
@@ -19,6 +20,14 @@ class Property(TypedDict):
     name: str
     type: AssetPropertyType
     value: str | int | float | bool
+
+
+@dataclass
+class AssetContext:
+    version: int
+    datasize: int
+    start_pos: int
+    end_pos: int
 
 
 class ParsingContext:
@@ -106,15 +115,18 @@ class ParsingContext:
         return asset_version, datasize
 
     @contextmanager
-    def read_asset(self):
+    def read_asset(self) -> Iterator[AssetContext]:
         version, datasize = self.parse_asset_header()
         start_pos = self.stream.tell()
 
-        yield version, datasize
+        asset_context = AssetContext(version, datasize, start_pos, start_pos + datasize)
 
-        end_pos = self.stream.tell()
-        if end_pos - start_pos != datasize:
-            raise ValueError(f"Asset data size mismatch: expected {datasize} bytes, read {end_pos - start_pos} bytes")
+        yield asset_context
+
+        if asset_context.end_pos - asset_context.start_pos != asset_context.datasize:
+            raise ValueError(
+                f"Asset data size mismatch: expected {asset_context.datasize} bytes, read {asset_context.end_pos - asset_context.start_pos} bytes"
+            )
 
 
 class WritingContext:
