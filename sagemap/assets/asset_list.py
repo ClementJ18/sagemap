@@ -2,13 +2,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
 class AssetListItem:
     type_id: int
-    isntance_id: int
+    instance_id: int
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
@@ -16,7 +16,14 @@ class AssetListItem:
         instance_id = context.stream.readUInt32()
 
         context.logger.debug(f"Parsed AssetListItem: Type ID: {type_id}, Instance ID: {instance_id}")
-        return cls(type_id, instance_id)
+        return cls(
+            type_id=type_id,
+            instance_id=instance_id,
+        )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeUInt32(self.type_id)
+        context.stream.writeUInt32(self.instance_id)
 
 
 @dataclass
@@ -35,4 +42,15 @@ class AssetList:
             asset_names = [AssetListItem.parse(context) for _ in range(asset_count)]
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(asset_ctx.version, asset_names, asset_ctx.start_pos, asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            asset_names=asset_names,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.asset_names))
+            for item in self.asset_names:
+                item.write(context)

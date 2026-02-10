@@ -2,12 +2,12 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
 class MPPosition:
-    asset_name = "MPPosition"
+    asset_name = "MPPositionInfo"
 
     version: int
     is_human: bool
@@ -46,9 +46,21 @@ class MPPosition:
             end_pos=asset_ctx.end_pos,
         )
 
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeBool(self.is_human)
+            context.stream.writeBool(self.is_computer)
+            if self.version > 0:
+                context.stream.writeBool(self.load_ai_script)
+
+            context.stream.writeUInt32(self.team)
+            if self.version > 0:
+                context.stream.writeUInt32(len(self.side_restrictions))
+                for restriction in self.side_restrictions:
+                    context.stream.writeUInt16PrefixedAsciiString(restriction)
 
 @dataclass
-class MPPositionsList:
+class MPPositionList:
     asset_name = "MPPositionList"
 
     version: int
@@ -62,10 +74,21 @@ class MPPositionsList:
             positions = []
             while context.stream.tell() < asset_ctx.end_pos:
                 name = context.parse_asset_name()
-                if name != "MPPositionInfo":
-                    raise ValueError(f"Expected MPPositionInfo asset, got {name}")
+                if name != MPPosition.asset_name:
+                    raise ValueError(f"Expected {MPPosition.asset_name} asset, got {name}")
 
                 positions.append(MPPosition.parse(context))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(asset_ctx.version, positions, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            positions=positions,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            for position in self.positions:
+                context.write_asset_name(position.asset_name)
+                position.write(context)

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -40,6 +40,16 @@ class NamedCamera:
             fov=fov,
             unknown=unknown,
         )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeVector3(self.look_at_point)
+        context.stream.writeUInt16PrefixedAsciiString(self.name)
+        context.stream.writeFloat(self.pitch)
+        context.stream.writeFloat(self.roll)
+        context.stream.writeFloat(self.yaw)
+        context.stream.writeFloat(self.zoom)
+        context.stream.writeFloat(self.fov)
+        context.stream.writeFloat(self.unknown)
 
 
 @dataclass
@@ -60,4 +70,15 @@ class NamedCameras:
                 cameras.append(NamedCamera.parse(context))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version=asset_ctx.version, cameras=cameras, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            cameras=cameras,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.cameras))
+            for camera in self.cameras:
+                camera.write(context)

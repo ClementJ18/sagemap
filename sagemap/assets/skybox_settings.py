@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -26,4 +26,19 @@ class SkyboxSettings:
             rotation = context.stream.readFloat()
             texture_scheme = context.stream.readUInt16PrefixedAsciiString()
 
-        return cls(version=asset_ctx.version, position=position, scale=scale, rotation=rotation, texture_scheme=texture_scheme, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            position=position,
+            scale=scale,
+            rotation=rotation,
+            texture_scheme=texture_scheme,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeVector3(self.position)
+            context.stream.writeFloat(self.scale)
+            context.stream.writeFloat(self.rotation)
+            context.stream.writeUInt16PrefixedAsciiString(self.texture_scheme)

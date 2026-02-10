@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -29,3 +29,8 @@ class WaterSettings:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeBool(self.reflection_on)
+            context.stream.writeFloat(self.reflection_plane_z)

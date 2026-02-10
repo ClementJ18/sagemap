@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -57,3 +57,21 @@ class EnvironmentData:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            if self.version >= 3:
+                context.stream.writeFloat(self.water_max_alpha_depth)
+                context.stream.writeFloat(self.deep_water_alpha)
+
+            if self.version < 5:
+                context.stream.writeBool(self.is_macro_texture_stretched)
+
+            context.stream.writeUInt16PrefixedAsciiString(self.macro_texture)
+            context.stream.writeUInt16PrefixedAsciiString(self.cloud_texture)
+
+            if self.version >= 4:
+                context.stream.writeUInt16PrefixedAsciiString(self.unknown_texture)
+
+            if self.version >= 6:
+                context.stream.writeUInt16PrefixedAsciiString(self.unknown_texture2)

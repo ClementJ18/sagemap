@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -18,7 +18,16 @@ class MissionHotSpot:
         title = context.stream.readUInt16PrefixedAsciiString()
         description = context.stream.readUInt16PrefixedAsciiString()
 
-        return cls(id=id, title=title, description=description)
+        return cls(
+            id=id,
+            title=title,
+            description=description,
+        )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeUInt16PrefixedAsciiString(self.id)
+        context.stream.writeUInt16PrefixedAsciiString(self.title)
+        context.stream.writeUInt16PrefixedAsciiString(self.description)
 
 
 @dataclass
@@ -38,7 +47,15 @@ class MissionHotSpots:
             for _ in range(mission_hotspots_count):
                 mission_hotspots.append(MissionHotSpot.parse(context))
 
-        return cls(version=asset_ctx.version, mission_hotspots=mission_hotspots,
-                   start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
-
-
+        return cls(
+            version=asset_ctx.version,
+            mission_hotspots=mission_hotspots,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.mission_hotspots))
+            for hotspot in self.mission_hotspots:
+                hotspot.write(context)

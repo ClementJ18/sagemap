@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -39,17 +39,38 @@ class ScriptArgument:
             string_value=string_value,
             position_value=position_value,
         )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeUInt32(self.type)
+
+        if self.type == 16:  # Coordinate
+            if self.position_value is None:
+                raise ValueError("position_value must be set for Coordinate arguments")
+            context.stream.writeFloat(self.position_value[0])
+            context.stream.writeFloat(self.position_value[1])
+            context.stream.writeFloat(self.position_value[2])
+        else:
+            if self.int_value is None or self.float_value is None or self.string_value is None:
+                raise ValueError("int_value, float_value, and string_value must be set for non-Coordinate arguments")
+            context.stream.writeInt32(self.int_value)
+            context.stream.writeFloat(self.float_value)
+            context.stream.writeUInt16PrefixedAsciiString(self.string_value)
 
 
 @dataclass
 class ScriptDerived:
-    """Base class for ScriptAction and Condition"""
+    asset_name_true = "ScriptAction"
+    asset_name_false = "ScriptActionFalse"
 
+    version: int
     content_type: int
     internal_name: str | None
     arguments: list[ScriptArgument]
     is_enabled: bool | None
     is_inverted: bool | None
+    has_internal_name_version: int
+    has_is_enabled_version: int
+    has_is_inverted: bool
 
     @classmethod
     def parse(
@@ -81,16 +102,39 @@ class ScriptDerived:
 
         context.logger.debug("Finished parsing ScriptDerived")
         return cls(
+            version=asset_ctx.version,
             content_type=content_type,
             internal_name=internal_name,
             arguments=arguments,
             is_enabled=is_enabled,
             is_inverted=is_inverted,
+            has_internal_name_version=has_internal_name_version,
+            has_is_enabled_version=has_is_enabled_version,
+            has_is_inverted=has_is_inverted,
         )
+    
+    def write(self, context: "WritingContext", asset_name: str):
+        with context.write_asset(asset_name, self.version):
+            context.stream.writeUInt32(self.content_type)
+
+            if self.version >= self.has_internal_name_version:
+                context.write_asset_property_key(self.internal_name)
+
+            context.stream.writeUInt32(len(self.arguments))
+            for argument in self.arguments:
+                argument.write(context)
+
+            if self.version >= self.has_is_enabled_version:
+                context.stream.writeBoolUInt32(self.is_enabled)
+
+                if self.has_is_inverted:
+                    context.stream.writeBoolUInt32(self.is_inverted)
 
 
 @dataclass
 class OrCondition:
+    asset_name = "OrCondition"
+
     version: int
     conditions: list[ScriptDerived]
     start_pos: int
@@ -113,10 +157,18 @@ class OrCondition:
         return cls(
             version=asset_ctx.version, conditions=conditions, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos
         )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            for condition in self.conditions:
+                context.write_asset_name("Condition")
+                condition.write(context, "Condition")
 
 
 @dataclass
 class Script:
+    asset_name = "Script"
+
     name: str
     comment: str
     conditions_comment: str
@@ -204,11 +256,11 @@ class Script:
             actions_if_false = []
             while context.stream.tell() < asset_ctx.end_pos:
                 asset_name = context.parse_asset_name()
-                if asset_name == "OrCondition":
+                if asset_name == OrCondition.asset_name:
                     or_conditions.append(OrCondition.parse(context))
-                elif asset_name == "ScriptAction":
+                elif asset_name == ScriptDerived.asset_name_true:
                     actions_if_true.append(ScriptDerived.parse(context, 2, 3, False))
-                elif asset_name == "ScriptActionFalse":
+                elif asset_name == ScriptDerived.asset_name_false:
                     actions_if_false.append(ScriptDerived.parse(context, 2, 3, False))
                 else:
                     raise ValueError(f"Unexpected asset in script: {asset_name}")
@@ -243,18 +295,68 @@ class Script:
             actions_if_true=actions_if_true,
             actions_if_false=actions_if_false,
         )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt16PrefixedAsciiString(self.name)
+            context.stream.writeUInt16PrefixedAsciiString(self.comment)
+            context.stream.writeUInt16PrefixedAsciiString(self.conditions_comment)
+            context.stream.writeUInt16PrefixedAsciiString(self.actions_comment)
+
+            context.stream.writeBool(self.is_active)
+            context.stream.writeBool(self.deactivate_upon_success)
+
+            context.stream.writeBool(self.active_in_easy)
+            context.stream.writeBool(self.active_in_medium)
+            context.stream.writeBool(self.active_in_hard)
+
+            context.stream.writeBool(self.is_subroutine)
+
+            if self.version >= 2:
+                context.stream.writeUInt32(self.evaluation_interval)
+
+                if self.version == 5:
+                    context.stream.writeBool(self.uses_evaluation_interval_type)
+                    context.stream.writeUInt32(self.evaluation_interval_type)
+
+            if self.version >= 3:
+                context.stream.writeBool(self.actions_fire_sequentially)
+                context.stream.writeBool(self.loop_actions)
+                context.stream.writeInt32(self.loop_count)
+                context.stream.writeBool(self.sequential_target_type)
+                context.stream.writeUInt16PrefixedAsciiString(self.sequential_target_name)
+
+            if self.version >= 4:
+                context.stream.writeUInt16PrefixedAsciiString(self.unknown)
+
+            if self.version >= 6:
+                context.stream.writeInt32(self.unknown2)
+                context.stream.writeUInt16(self.unknown3)
+
+            for or_condition in self.or_conditions:
+                context.write_asset_name(OrCondition.asset_name)
+                or_condition.write(context)
+
+            for action in self.actions_if_true:
+                context.write_asset_name(ScriptDerived.asset_name_true)
+                action.write(context, ScriptDerived.asset_name_true)
+
+            for action in self.actions_if_false:
+                context.write_asset_name(ScriptDerived.asset_name_false)
+                action.write(context, ScriptDerived.asset_name_false)
 
 
 @dataclass
 class ScriptGroup:
+    asset_name = "ScriptGroup"
+
     version: int
     name: str
     is_active: bool
     is_subroutine: bool
     start_pos: int
     end_pos: int
-    script_groups: dict[str, "ScriptGroup"] = field(default_factory=dict)
-    scripts: dict[str, Script] = field(default_factory=dict)
+    items: list["ScriptGroup | Script"] = field(default_factory=list)
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
@@ -263,13 +365,11 @@ class ScriptGroup:
             is_active = context.stream.readBool()
             is_subroutine = context.stream.readBool()
 
-            script_groups = {}
-            scripts = {}
+            items = []
 
             while context.stream.tell() < asset_ctx.end_pos:
-                nested_groups, nested_scripts = ScriptGroup.parse_script_list(context)
-                script_groups.update(nested_groups)
-                scripts.update(nested_scripts)
+                item = ScriptGroup.parse_script_list(context)
+                items.append(item)
 
         context.logger.debug("Finished parsing ScriptGroup")
         return cls(
@@ -277,8 +377,7 @@ class ScriptGroup:
             name=name,
             is_active=is_active,
             is_subroutine=is_subroutine,
-            script_groups=script_groups,
-            scripts=scripts,
+            items=items,
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
@@ -286,28 +385,37 @@ class ScriptGroup:
     @staticmethod
     def parse_script_list(
         context: "ParsingContext",
-    ) -> tuple[dict[str, "ScriptGroup"], dict[str, Script]]:
-        script_groups = {}
-        scripts = {}
+    ) -> "ScriptGroup | Script":
         asset_name = context.parse_asset_name()
 
         if asset_name == "ScriptGroup":
-            group = ScriptGroup.parse(context)
-            script_groups[group.name] = group
+            return ScriptGroup.parse(context)
         elif asset_name == "Script":
-            script = Script.parse(context)
-            scripts[script.name] = script
+            return Script.parse(context)
         else:
             raise ValueError(f"Expected ScriptGroup or Script asset, got {asset_name}")
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt16PrefixedAsciiString(self.name)
+            context.stream.writeBool(self.is_active)
+            context.stream.writeBool(self.is_subroutine)
 
-        return script_groups, scripts
+            for item in self.items:
+                if isinstance(item, ScriptGroup):
+                    context.write_asset_name(ScriptGroup.asset_name)
+                    item.write(context)
+                else:  # Script
+                    context.write_asset_name(Script.asset_name)
+                    item.write(context)
 
 
 @dataclass
 class ScriptList:
+    asset_name = "ScriptList"
+
     version: int
-    script_groups: dict[str, ScriptGroup]
-    scripts: dict[str, Script]
+    items: list["ScriptGroup | Script"]
     start_pos: int
     end_pos: int
 
@@ -317,22 +425,29 @@ class ScriptList:
             if asset_ctx.version != 1:
                 raise ValueError(f"Unexpected ScriptList version: {asset_ctx.version}")
 
-            script_groups = {}
-            scripts = {}
+            items = []
 
             while context.stream.tell() < asset_ctx.end_pos:
-                nested_groups, nested_scripts = ScriptGroup.parse_script_list(context)
-                script_groups.update(nested_groups)
-                scripts.update(nested_scripts)
+                item = ScriptGroup.parse_script_list(context)
+                items.append(item)
 
         context.logger.debug("Finished parsing ScriptList")
         return cls(
             version=asset_ctx.version,
-            script_groups=script_groups,
-            scripts=scripts,
+            items=items,
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            for item in self.items:
+                if isinstance(item, ScriptGroup):
+                    context.write_asset_name(ScriptGroup.asset_name)
+                    item.write(context)
+                else:  # Script
+                    context.write_asset_name(Script.asset_name)
+                    item.write(context)
 
 
 @dataclass
@@ -350,8 +465,8 @@ class PlayerScriptsList:
             script_lists = []
             while context.stream.tell() < asset_ctx.end_pos:
                 asset_name = context.parse_asset_name()
-                if asset_name != "ScriptList":
-                    raise ValueError(f"Expected ScriptList asset, got {asset_name}")
+                if asset_name != ScriptList.asset_name:
+                    raise ValueError(f"Expected {ScriptList.asset_name} asset, got {asset_name}")
 
                 script_lists.append(ScriptList.parse(context))
 
@@ -362,3 +477,9 @@ class PlayerScriptsList:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
+
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            for script_list in self.script_lists:
+                context.write_asset_name(ScriptList.asset_name)
+                script_list.write(context)

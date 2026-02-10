@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -54,6 +54,22 @@ class StandingWaterArea:
             depth_color=depth_color,
         )
 
+    def write(self, context: "WritingContext"):
+        context.stream.writeUInt32(self.unique_id)
+        context.stream.writeUInt16PrefixedAsciiString(self.name)
+        context.stream.writeUInt16PrefixedAsciiString(self.layer_name)
+        context.stream.writeFloat(self.uv_scroll_speed)
+        context.stream.writeBool(self.use_adaptive_blending)
+        context.stream.writeUInt16PrefixedAsciiString(self.bump_map_texture)
+        context.stream.writeUInt16PrefixedAsciiString(self.sky_texture)
+
+        context.stream.writeUInt32(len(self.points))
+        for point in self.points:
+            context.stream.writeVector2(point)
+
+        context.stream.writeUInt32(self.water_height)
+        context.stream.writeUInt16PrefixedAsciiString(self.fx_shader)
+        context.stream.writeUInt16PrefixedAsciiString(self.depth_color)
 
 @dataclass
 class StandingWaterAreas:
@@ -74,4 +90,15 @@ class StandingWaterAreas:
                 areas.append(StandingWaterArea.parse(context))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(asset_ctx.version, areas, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            areas=areas,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.areas))
+            for area in self.areas:
+                area.write(context)

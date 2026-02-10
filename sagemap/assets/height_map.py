@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -77,3 +77,29 @@ class HeightMapData:
             asset_ctx.start_pos,
             asset_ctx.end_pos,
         )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(self.width)
+            context.stream.writeUInt32(self.height)
+            context.stream.writeUInt32(self.border_width)
+
+            context.stream.writeUInt32(len(self.borders))
+            for border in self.borders:
+                corner1X, corner1Y = border["corner1"]
+                x, y = border["position"]
+                if self.version >= 6:
+                    context.stream.writeUInt32(corner1X)
+                    context.stream.writeUInt32(corner1Y)
+                context.stream.writeUInt32(x)
+                context.stream.writeUInt32(y)
+
+            context.stream.writeUInt32(self.area)
+
+            for y in range(self.height):
+                for x in range(self.width):
+                    elevation = self.elevations[y][x]
+                    if self.version >= 5:
+                        context.stream.writeUInt16(elevation)
+                    else:
+                        context.stream.writeUChar(elevation)

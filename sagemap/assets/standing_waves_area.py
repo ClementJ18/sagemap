@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -15,6 +15,7 @@ class StandingWaveArea:
     uv_scroll_speed: float
     use_adaptive_blending: bool
     points: list[tuple[float, float]]
+    unknown: int
     final_width: int | None
     final_height: int | None
     initial_width_fraction: int | None
@@ -82,6 +83,7 @@ class StandingWaveArea:
             uv_scroll_speed=uv_scroll_speed,
             use_adaptive_blending=use_adaptive_blending,
             points=points,
+            unknown=unknown,
             final_width=final_width,
             final_height=final_height,
             initial_width_fraction=initial_width_fraction,
@@ -95,6 +97,37 @@ class StandingWaveArea:
             enable_pca_wave=enable_pca_wave,
             wave_particle_fx_name=wave_particle_fx_name,
         )
+    
+    def write(self, context: "WritingContext", version: int):
+        context.stream.writeUInt32(self.unique_id)
+        context.stream.writeUInt16PrefixedAsciiString(self.name)
+        context.stream.writeUInt16PrefixedAsciiString(self.layer_name)
+        context.stream.writeFloat(self.uv_scroll_speed)
+        context.stream.writeBool(self.use_adaptive_blending)
+
+        context.stream.writeUInt32(len(self.points))
+        for point in self.points:
+            context.stream.writeVector2(point)
+
+        context.stream.writeUInt32(self.unknown)
+
+        if version < 3:
+            context.stream.writeUInt32(self.final_width)
+            context.stream.writeUInt32(self.final_height)
+            context.stream.writeUInt32(self.initial_width_fraction)
+            context.stream.writeUInt32(self.initial_height_fraction)
+            context.stream.writeUInt32(self.initial_velocity)
+            context.stream.writeUInt32(self.time_to_fade)
+            context.stream.writeUInt32(self.time_to_compress)
+            context.stream.writeUInt32(self.time_offset_2nd_wave)
+            context.stream.writeUInt32(self.distance_from_shore)
+            context.stream.writeUInt16PrefixedAsciiString(self.texture)
+
+        if version == 2:
+            context.stream.writeBoolUInt32(self.enable_pca_wave)
+
+        if version >= 4:
+            context.stream.writeUInt16PrefixedAsciiString(self.wave_particle_fx_name)
 
 
 @dataclass
@@ -116,4 +149,15 @@ class StandingWaveAreas:
                 areas.append(StandingWaveArea.parse(context, asset_ctx.version))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version=asset_ctx.version, areas=areas, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            areas=areas,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.areas))
+            for area in self.areas:
+                area.write(context, self.version)

@@ -136,6 +136,60 @@ class WritingContext:
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.NullHandler())
 
+        self.assets_by_index = {}
+        self.index_by_asset = {}
+
+    def set_asset_list(self, asset_list):
+        self.assets_by_index = {i + 1: name for i, name in enumerate(asset_list)}
+        self.index_by_asset = {name: i + 1 for i, name in enumerate(asset_list)}
+
+    def add_asset(self, asset_name: str) -> int:
+        if asset_name in self.index_by_asset:
+            return self.index_by_asset[asset_name]
+        
+        index = len(self.assets_by_index) + 1
+        self.assets_by_index[index] = asset_name
+        self.index_by_asset[asset_name] = index
+
+        return index
+    
+    def dict_to_properties(self, properties: dict[str, Property]) -> list[tuple[str, AssetPropertyType, str | int | float | bool]]:
+        result = []
+        for name, prop in properties.items():
+            if name != prop["name"]:
+                raise ValueError(f"Property name mismatch: key '{name}' does not match property name '{prop['name']}'")
+            result.append((prop["name"], prop["type"], prop["value"]))
+        return result
+    
+    def write_properties(self, properties: list[tuple[str, AssetPropertyType, str | int | float | bool]]):
+        self.stream.writeUInt16(len(properties))
+        for name, ptype, value in properties:
+            asset_name_index = self.add_asset(name)
+            self.stream.writeUChar(ptype.value)
+            self.stream.writeUInt24(asset_name_index)
+
+            if ptype == AssetPropertyType.Boolean:
+                self.stream.writeBool(value)
+            elif ptype == AssetPropertyType.Integer:
+                self.stream.writeInt32(value)
+            elif ptype == AssetPropertyType.RealNumber:
+                self.stream.writeFloat(value)
+            elif ptype in (AssetPropertyType.AsciiString, AssetPropertyType.Unknown):
+                self.stream.writeUInt16PrefixedAsciiString(value)
+            elif ptype == AssetPropertyType.UnicodeString:
+                self.stream.writeUInt16PrefixedUnicodeString(value)
+            else:
+                raise ValueError(f"Unexpected property type: {ptype}")
+            
+    def write_asset_name(self, asset_name: str):
+        asset_index = self.add_asset(asset_name)
+        self.stream.writeUInt32(asset_index)
+
+    def write_asset_property_key(self, property_key: tuple[AssetPropertyType, int, str]):
+        property_key_type, property_key_name_index, _ = property_key
+        self.stream.writeUChar(property_key_type.value)
+        self.stream.writeUInt24(property_key_name_index)
+
     @contextmanager
     def write_asset(self, asset_name: str, version: int):
         self.logger.debug(f"Writing asset: {asset_name}, Version: {version}")

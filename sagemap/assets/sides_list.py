@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from .teams import Team
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -57,6 +57,23 @@ class BuildListInfo:
             repairable=repairable,
             unknown=unknown,
         )
+    
+    def write(self, context: "WritingContext", has_asset_list: bool):
+        context.stream.writeUInt16PrefixedAsciiString(self.build_name)
+        context.stream.writeUInt16PrefixedAsciiString(self.template_name)
+        context.stream.writeVector3(self.location)
+        context.stream.writeFloat(self.angle)
+        context.stream.writeBool(self.is_initially_built)
+
+        if has_asset_list and self.unknown is not None:
+            context.stream.writeBool(self.unknown)
+
+        context.stream.writeUInt32(self.num_rebuilds)
+        context.stream.writeUInt16PrefixedAsciiString(self.script)
+        context.stream.writeInt32(self.health)
+        context.stream.writeBool(self.whiner)
+        context.stream.writeBool(self.unsellable)
+        context.stream.writeBool(self.repairable)
 
 
 @dataclass
@@ -89,6 +106,18 @@ class BuildList:
             faction_name_property=faction_name_property,
             build_list=build_list,
         )
+    
+    def write(self, context: "WritingContext", has_asset_list: bool):
+        if has_asset_list:
+            context.stream.writeUInt16PrefixedAsciiString(self.faction_name)
+        else:
+            if self.faction_name_property is None:
+                raise ValueError("faction_name_property must be set when has_asset_list is False")
+            context.write_asset_property_key(self.faction_name_property)
+
+        context.stream.writeUInt32(len(self.build_list))
+        for item in self.build_list:
+            item.write(context, has_asset_list)
 
 
 @dataclass
@@ -110,7 +139,18 @@ class BuildLists:
                 build_lists.append(item)
 
         context.logger.debug("Finished parsing BuildLists")
-        return cls(asset_ctx.version, build_lists, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            build_lists=build_lists,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext", has_asset_list: bool):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.build_lists))
+            for item in self.build_lists:
+                item.write(context, has_asset_list)
 
 
 @dataclass
@@ -130,7 +170,16 @@ class Player:
 
         context.logger.debug(f"Parsed Side with {len(build_lists)} build list items")
 
-        return cls(properties=properties, build_list_items=build_lists)
+        return cls(
+            properties=properties,
+            build_list_items=build_lists,
+        )
+    
+    def write(self, context: "WritingContext", has_asset_list: bool):
+        context.write_properties(context.dict_to_properties(self.properties))
+        context.stream.writeUInt32(len(self.build_list_items))
+        for item in self.build_list_items.values():
+            item.write(context, has_asset_list)
 
 
 @dataclass
@@ -181,3 +230,18 @@ class SidesList:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
+    
+    def write(self, context: "WritingContext", has_asset_list: bool):
+        with context.write_asset(self.asset_name, self.version):
+            if self.version >= 6:
+                context.stream.writeBool(self.unknown1)
+
+            context.stream.writeUInt32(len(self.players))
+            for player in self.players:
+                player.write(context, has_asset_list)
+
+            if self.version < 5:
+                if self.version < 2:
+                    context.stream.writeUInt32(len(self.teams))
+                for team in self.teams:
+                    team.write(context)

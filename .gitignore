@@ -185,3 +185,8 @@ Moria.json
 parse_results.json
 test.py
 t.py
+Mission.map
+Mission.tga
+replace.py
+Mission_compressed.map
+Mission_uncompressed.map

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -31,6 +31,13 @@ class FreeCameraAnimationCameraFrame:
             rotation=rotation,
             fov=fov,
         )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeUInt32(self.frame_index)
+        context.stream.writeFourCc(self.interpolation_type[::-1])  # Reverse back to big endian
+        context.stream.writeVector3(self.position)
+        context.stream.writeVector4(self.rotation)
+        context.stream.writeFloat(self.fov)
 
 
 @dataclass
@@ -44,7 +51,14 @@ class FreeCameraAnimationFrameData:
         for _ in range(camera_frames_count):
             camera_frames.append(FreeCameraAnimationCameraFrame.parse(context))
 
-        return cls(frames=camera_frames)
+        return cls(
+            frames=camera_frames,
+        )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeUInt32(len(self.frames))
+        for frame in self.frames:
+            frame.write(context)
 
 
 @dataclass
@@ -62,7 +76,16 @@ class LookAtCameraAnimationLookAtFrame:
 
         look_at = context.stream.readVector3()
 
-        return cls(frame_index=frame_index, interpolation_type=interpolation_type, look_at_point=look_at)
+        return cls(
+            frame_index=frame_index,
+            interpolation_type=interpolation_type,
+            look_at_point=look_at,
+        )
+
+    def write(self, context: "WritingContext"):
+        context.stream.writeUInt32(self.frame_index)
+        context.stream.writeFourCc(self.interpolation_type[::-1])
+        context.stream.writeVector3(self.look_at_point)
 
 
 @dataclass
@@ -91,6 +114,13 @@ class LookAtCameraAnimationCameraFrame:
             roll=roll,
             fov=fov,
         )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeUInt32(self.frame_index)
+        context.stream.writeFourCc(self.interpolation_type[::-1])
+        context.stream.writeVector3(self.position)
+        context.stream.writeFloat(self.roll)
+        context.stream.writeFloat(self.fov)
 
 
 @dataclass
@@ -110,7 +140,19 @@ class LookAtCameraAnimationFrameData:
         for _ in range(look_at_frames_count):
             look_at_frames.append(LookAtCameraAnimationLookAtFrame.parse(context))
 
-        return cls(camera_frames=camera_frames, look_at_frames=look_at_frames)
+        return cls(
+            camera_frames=camera_frames,
+            look_at_frames=look_at_frames,
+        )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeUInt32(len(self.camera_frames))
+        for frame in self.camera_frames:
+            frame.write(context)
+
+        context.stream.writeUInt32(len(self.look_at_frames))
+        for frame in self.look_at_frames:
+            frame.write(context)
 
 
 @dataclass
@@ -148,6 +190,14 @@ class CameraAnimation:
             start_offset=start_offset,
             frame_data=frame_data,
         )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeFourCc(self.animation_type[::-1])
+        context.stream.writeUInt16PrefixedAsciiString(self.name)
+        context.stream.writeUInt32(self.num_frames)
+        context.stream.writeUInt32(self.start_offset)
+
+        self.frame_data.write(context)
 
 
 @dataclass
@@ -171,3 +221,9 @@ class CameraAnimationList:
         return cls(
             version=asset_ctx.version, animations=animations, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos
         )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.animations))
+            for animation in self.animations:
+                animation.write(context)

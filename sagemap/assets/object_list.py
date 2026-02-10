@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext, Property
+    from ..context import ParsingContext, Property, WritingContext
 
 
 @dataclass
@@ -38,6 +38,14 @@ class Object:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeVector3(self.position)
+            context.stream.writeFloat(self.angle)
+            context.stream.writeUInt32(self.road_type)
+            context.stream.writeUInt16PrefixedAsciiString(self.type_name)
+            context.write_properties(context.dict_to_properties(self.properties))
 
 
 @dataclass
@@ -61,4 +69,15 @@ class ObjectsList:
                 object_list.append(Object.parse(context))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(asset_ctx.version, object_list, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            object_list=object_list,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            for obj in self.object_list:
+                context.write_asset_name(Object.asset_name)
+                obj.write(context)

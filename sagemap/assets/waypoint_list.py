@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sagemap.context import ParsingContext
+from sagemap.context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -24,4 +24,16 @@ class WaypointsList:
                 waypoint_paths.append((start_waypoint_id, end_waypoint_id))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(asset_ctx.version, waypoint_paths, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            waypoint_paths=waypoint_paths,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext") -> bytes:
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.waypoint_paths))
+            for start_id, end_id in self.waypoint_paths:
+                context.stream.writeUInt32(start_id)
+                context.stream.writeUInt32(end_id)

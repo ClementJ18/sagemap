@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -107,6 +107,44 @@ class PolygonTrigger:
             river_alpha,
             points,
         )
+    
+    def write(self, context: "WritingContext", version: int):
+        context.stream.writeUInt16PrefixedAsciiString(self.name)
+
+        if version >= 4:
+            context.stream.writeUInt16PrefixedAsciiString(self.layer_name)
+
+        context.stream.writeUInt32(self.trigger_id)
+
+        if version >= 2:
+            context.stream.writeBool(self.is_water)
+
+        if version >= 3:
+            context.stream.writeBool(self.is_river)
+            context.stream.writeBoolUInt32(self.river_start)
+
+        if version >= 5:
+            context.stream.writeUInt16PrefixedAsciiString(self.river_texture)
+            context.stream.writeUInt16PrefixedAsciiString(self.noise_texture)
+            context.stream.writeUInt16PrefixedAsciiString(self.alpha_edge_texture)
+            context.stream.writeUInt16PrefixedAsciiString(self.sparkle_texture)
+            context.stream.writeUInt16PrefixedAsciiString(self.bump_map_texture)
+            context.stream.writeUInt16PrefixedAsciiString(self.sky_texture)
+            context.stream.writeBool(self.use_additive_blending)
+            
+            context.stream.writeUChar(self.river_color[0])
+            context.stream.writeUChar(self.river_color[1])
+            context.stream.writeUChar(self.river_color[2])
+            
+            context.stream.writeUChar(self.unknown)
+            context.stream.writeVector2(self.uv_scroll_speed)
+            context.stream.writeFloat(self.river_alpha)
+
+        context.stream.writeUInt32(len(self.points))
+        for point in self.points:
+            context.stream.writeInt32(point[0])
+            context.stream.writeInt32(point[1])
+            context.stream.writeInt32(point[2])
 
 
 @dataclass
@@ -133,4 +171,15 @@ class PolygonTriggers:
                     max_trigger_id = trigger.trigger_id
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(asset_ctx.version, polygon_triggers, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            polygon_triggers=polygon_triggers,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.polygon_triggers))
+            for trigger in self.polygon_triggers:
+                trigger.write(context, self.version)

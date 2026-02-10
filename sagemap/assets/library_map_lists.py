@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
@@ -24,7 +24,18 @@ class LibraryMaps:
                 values.append(context.stream.readUInt16PrefixedAsciiString())
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(asset_ctx.version, values, asset_ctx.start_pos, asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            values=values,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.values))
+            for value in self.values:
+                context.stream.writeUInt16PrefixedAsciiString(value)
 
 
 @dataclass
@@ -48,4 +59,15 @@ class LibraryMapLists:
                 lists.append(LibraryMaps.parse(context))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(asset_ctx.version, lists, asset_ctx.start_pos, asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            lists=lists,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            for library_map in self.lists:
+                context.write_asset_name(LibraryMaps.asset_name)
+                library_map.write(context)

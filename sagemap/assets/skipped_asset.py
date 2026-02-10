@@ -21,4 +21,9 @@ class SkippedAsset:
         data = context.stream.readBytes(datasize)
 
         context.logger.debug(f"Skipped asset: {name}, Version: {version}, Data Size: {datasize} bytes")
-        return cls(version, datasize, data, name)
+        return cls(
+            version=version,
+            datasize=datasize,
+            data=data,
+            name=name,
+        )

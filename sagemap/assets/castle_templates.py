@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 @dataclass
 class CastleTemplate:
@@ -26,7 +26,24 @@ class CastleTemplate:
             priority = context.stream.readUInt32()
             phase = context.stream.readUInt32()
 
-        return cls(name=name, template_name=template_name, offset=offset, angle=angle, priority=priority, phase=phase)
+        return cls(
+            name=name,
+            template_name=template_name,
+            offset=offset,
+            angle=angle,
+            priority=priority,
+            phase=phase,
+        )
+    
+    def write(self, context: "WritingContext", version: int):
+        context.stream.writeUInt16PrefixedAsciiString(self.name)
+        context.stream.writeUInt16PrefixedAsciiString(self.template_name)
+        context.stream.writeVector3(self.offset)
+        context.stream.writeFloat(self.angle)
+
+        if version >= 4:
+            context.stream.writeUInt32(self.priority)
+            context.stream.writeUInt32(self.phase)
 
 @dataclass
 class PerimeterPoint:
@@ -45,7 +62,20 @@ class PerimeterPoint:
             y = context.stream.readInt32()
             z = context.stream.readInt32()
 
-        return cls(x=x, y=y, z=z)
+        return cls(
+            x=x,
+            y=y,
+            z=z,
+        )
+    
+    def write(self, context: "WritingContext", version: int):
+        if version >= 3:
+            context.stream.writeFloat(self.x)
+            context.stream.writeFloat(self.y)
+        else:
+            context.stream.writeInt32(int(self.x))
+            context.stream.writeInt32(int(self.y))
+            context.stream.writeInt32(int(self.z))
 
 @dataclass
 class CastlePerimeter:
@@ -55,9 +85,7 @@ class CastlePerimeter:
 
     @classmethod
     def parse(cls, context: "ParsingContext", version: int):
-        stream_pos_before = context.stream.tell()
         has_perimeter = context.stream.readBoolUInt32Checked()
-        context.logger.debug(f"CastlePerimeter: has_perimeter={has_perimeter}, position before={stream_pos_before}, after bool={context.stream.tell()}")
         
         name = None
         perimeter_points = []
@@ -69,7 +97,19 @@ class CastlePerimeter:
             for _ in range(perimeter_point_count):
                 perimeter_points.append(PerimeterPoint.parse(context, version))
 
-        return cls(has_perimeter=has_perimeter, name=name, perimeter_points=perimeter_points)
+        return cls(
+            has_perimeter=has_perimeter,
+            name=name,
+            perimeter_points=perimeter_points,
+        )
+    
+    def write(self, context: "WritingContext", version: int):
+        context.stream.writeBoolUInt32Checked(self.has_perimeter)
+        if self.has_perimeter:
+            context.stream.writeUInt16PrefixedAsciiString(self.name if self.name else "")
+            context.stream.writeUInt32(len(self.perimeter_points))
+            for point in self.perimeter_points:
+                point.write(context, version)
 
 
 @dataclass
@@ -85,38 +125,36 @@ class CastleTemplates:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as asset_ctx:
-            context.logger.debug(f"CastleTemplates: version={asset_ctx.version}, datasize={asset_ctx.datasize}, start_pos={asset_ctx.start_pos}")
-            
+        with context.read_asset() as asset_ctx:          
             property_key = context.parse_asset_property_key()
-            pos_after_key = context.stream.tell()
-            context.logger.debug(f"After property key: position={pos_after_key}, bytes consumed={pos_after_key - asset_ctx.start_pos}")
-
             template_count = context.stream.readUInt32()
-            pos_after_count = context.stream.tell()
-            context.logger.debug(f"Template count={template_count}, position={pos_after_count}, bytes consumed={pos_after_count - asset_ctx.start_pos}")
             
             templates = []
-            for i in range(template_count):
+            for _ in range(template_count):
                 templates.append(CastleTemplate.parse(context, asset_ctx.version))
-                if i < 3 or i >= template_count - 2:  # Log first 3 and last 2
-                    pos = context.stream.tell()
-                    context.logger.debug(f"After template {i+1}/{template_count}: position={pos}, total consumed={pos - asset_ctx.start_pos}")
-            
-            pos_before_perimeter = context.stream.tell()
-            bytes_consumed = pos_before_perimeter - asset_ctx.start_pos
-            remaining = asset_ctx.datasize - bytes_consumed
-            context.logger.debug(f"Before perimeter: position={pos_before_perimeter}, consumed={bytes_consumed}/{asset_ctx.datasize}, remaining={remaining}")
-            
-            # Peek at the next 20 bytes without consuming
-            peek_bytes = context.stream.readBytes(20)
-            context.stream.seek(pos_before_perimeter)
-            context.logger.debug(f"Next 20 bytes at perimeter start: {peek_bytes.hex(' ')}")
 
             perimeter = None
             if asset_ctx.version >= 2:
                 perimeter = CastlePerimeter.parse(context, asset_ctx.version)
 
 
-        return cls(version=asset_ctx.version, property_key=property_key, templates=templates, perimeter=perimeter,
-                   start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version, 
+            property_key=property_key, 
+            templates=templates, 
+            perimeter=perimeter,
+            start_pos=asset_ctx.start_pos, 
+            end_pos=asset_ctx.end_pos
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.write_asset_property_key(self.property_key)
+            context.stream.writeUInt32(len(self.templates))
+            for template in self.templates:
+                template.write(context, self.version)
+
+            if self.version >= 2:
+                self.perimeter.write(context, self.version)
+    
+

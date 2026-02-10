@@ -2,13 +2,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 @dataclass
 class RiverArea:
     asset_name = "RiverArea"
 
+    version: int
     unique_id: int
     name: str
     layer_name: str
@@ -19,6 +20,7 @@ class RiverArea:
     alpha_edge_texture: str
     sparkle_texture: str
     color: tuple[int, int, int]
+    unused_color_a: int
     alpha: float
     water_height: int
     river_type: str | None
@@ -62,6 +64,7 @@ class RiverArea:
             lines.append((context.stream.readVector2(), context.stream.readVector2()))
 
         return cls(
+            version=version,
             unique_id=unique_id,
             name=name,
             layer_name=layer_name,
@@ -72,12 +75,40 @@ class RiverArea:
             alpha_edge_texture=alpha_edge_texture,
             sparkle_texture=sparkle_texture,
             color=color,
+            unused_color_a=unused_color_a,
             alpha=alpha,
             water_height=water_height,
             river_type=river_type,
             minimum_water_lod=minimum_water_lod,
             lines=lines,
         )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeUInt32(self.unique_id)
+        context.stream.writeUInt16PrefixedAsciiString(self.name)
+        context.stream.writeUInt16PrefixedAsciiString(self.layer_name)
+        context.stream.writeFloat(self.uv_scroll_speed)
+        context.stream.writeBool(self.use_additive_blending)
+        context.stream.writeUInt16PrefixedAsciiString(self.river_texture)
+        context.stream.writeUInt16PrefixedAsciiString(self.noise_texture)
+        context.stream.writeUInt16PrefixedAsciiString(self.alpha_edge_texture)
+        context.stream.writeUInt16PrefixedAsciiString(self.sparkle_texture)
+        context.stream.writeUChar(self.color[0])
+        context.stream.writeUChar(self.color[1])
+        context.stream.writeUChar(self.color[2])
+        context.stream.writeUChar(self.unused_color_a)
+        context.stream.writeFloat(self.alpha)
+        context.stream.writeUInt32(self.water_height)
+
+        if self.version >= 3:
+            context.stream.writeUInt16PrefixedAsciiString(self.river_type)
+
+        context.stream.writeUInt16PrefixedAsciiString(self.minimum_water_lod)
+
+        context.stream.writeUInt32(len(self.lines))
+        for line in self.lines:
+            context.stream.writeVector2(line[0])
+            context.stream.writeVector2(line[1])
 
 
 @dataclass
@@ -98,4 +129,15 @@ class RiverAreas:
                 areas.append(RiverArea.parse(context, asset_ctx.version))
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(asset_ctx.version, areas, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            areas=areas,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.areas))
+            for area in self.areas:
+                area.write(context)

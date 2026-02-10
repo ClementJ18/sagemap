@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
 
 
 class TimeOfTheDay(enum.Enum):
@@ -38,7 +38,16 @@ class MapColorArgb:
         g = (value >> 8) & 0xFF
         b = value & 0xFF
 
-        return cls(a=a, r=r, g=g, b=b)
+        return cls(
+            a=a,
+            r=r,
+            g=g,
+            b=b,
+        )
+    
+    def write(self, context: "WritingContext"):
+        value = (self.a << 24) | (self.r << 16) | (self.g << 8) | self.b
+        context.stream.writeUInt32(value)
 
 
 @dataclass
@@ -53,7 +62,16 @@ class GlobalLight:
         color = context.stream.readVector3()
         direction = context.stream.readVector3()
 
-        return cls(ambient, color, direction)
+        return cls(
+            ambient=ambient,
+            color=color,
+            direction=direction,
+        )
+    
+    def write(self, context: "WritingContext"):
+        context.stream.writeVector3(self.ambient)
+        context.stream.writeVector3(self.color)
+        context.stream.writeVector3(self.direction)
 
 
 @dataclass
@@ -111,6 +129,31 @@ class GlobalLightingConfiguration:
             object_accent2=object_accent2,
             infantry_accent2=infantry_accent2,
         )
+    
+    def write(self, context: "WritingContext", version: int):
+        self.terrain_sun.write(context)
+
+        if version < 10:
+            self.object_sun.write(context)
+
+            if version >= 7:
+                self.infantry_sun.write(context)
+
+        self.terrain_accent1.write(context)
+
+        if version < 10:
+            self.object_accent1.write(context)
+
+            if version >= 7:
+                self.infantry_accent1.write(context)
+
+        self.terrain_accent2.write(context)
+
+        if version < 10:
+            self.object_accent2.write(context)
+
+            if version >= 7:
+                self.infantry_accent2.write(context)
 
 
 @dataclass
@@ -166,3 +209,23 @@ class GlobalLighting:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(self.time_of_the_day.value)
+
+            for member in TimeOfTheDay:
+                config = self.lighting_configurations[member]
+                config.write(context, self.version)
+
+            self.shadow_color.write(context)
+
+            if self.version >= 7 and self.version < 11:
+                context.stream.writeBytes(self.unknown)
+
+            if self.version >= 12:
+                context.stream.writeVector3(self.unknown2)
+                self.unknown3.write(context)
+
+            if self.version >= 8:
+                context.stream.writeVector3(self.no_cloud_factor)

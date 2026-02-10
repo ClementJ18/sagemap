@@ -19,7 +19,11 @@ class GlobalVersion:
             pass
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(version=asset_ctx.version, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
 
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):

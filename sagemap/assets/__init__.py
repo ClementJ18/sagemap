@@ -10,7 +10,7 @@ from .height_map import HeightMapData
 from .library_map_lists import LibraryMapLists
 from .mission_hotspots import MissionHotSpots
 from .mission_objectives import MissionObjectives
-from .mp_positions import MPPositionsList
+from .mp_positions import MPPositionList
 from .named_cameras import NamedCameras
 from .object_list import ObjectsList
 from .player_scripts import PlayerScriptsList
@@ -37,7 +37,7 @@ __all__ = [
     "SkippedAsset",
     "WaypointsList",
     "Teams",
-    "MPPositionsList",
+    "MPPositionList",
     "ObjectsList",
     "PlayerScriptsList",
     "PolygonTriggers",

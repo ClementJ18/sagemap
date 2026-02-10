@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from sagemap.context import ParsingContext, Property
+if TYPE_CHECKING:
+    from ..context import WritingContext, ParsingContext, Property
 
 
 @dataclass
@@ -18,4 +20,13 @@ class WorldInfo:
             properties = context.properties_to_dict(context.parse_properties())
 
         context.logger.debug(f"Finished parsing {cls.asset_name}")
-        return cls(asset_ctx.version, properties, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos)
+        return cls(
+            version=asset_ctx.version,
+            properties=properties,
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
+        )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.write_properties(context.dict_to_properties(self.properties))

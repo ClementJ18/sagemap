@@ -3,7 +3,7 @@ from enum import IntEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..context import ParsingContext
+    from ..context import ParsingContext, WritingContext
     from .height_map import HeightMapData
 
 
@@ -50,6 +50,14 @@ class BlendTileTexture:
             name=name,
         )
 
+    def write(self, context: "WritingContext"):
+        """Write inline (no asset header)."""
+        context.stream.writeUInt32(self.cell_start)
+        context.stream.writeUInt32(self.cell_count)
+        context.stream.writeUInt32(self.cell_size)
+        context.stream.writeUInt32(self.magic_value)
+        context.stream.writeUInt16PrefixedAsciiString(self.name)
+
 
 @dataclass
 class BlendDescription:
@@ -84,6 +92,15 @@ class BlendDescription:
             magic_value1=magic_value1,
         )
 
+    def write(self, context: "WritingContext"):
+        """Write inline (no asset header)."""
+        context.stream.writeUInt32(self.secondary_texture_tile)
+        context.stream.writeBytes(self.raw_blend_direction)
+        context.stream.writeUChar(self.flags)
+        context.stream.writeBool(self.two_sided)
+        context.stream.writeUInt32(self.magic_value1)
+        context.stream.writeUInt32(0x7ADA0000)
+
 
 @dataclass
 class CliffTextureMapping:
@@ -117,6 +134,19 @@ class CliffTextureMapping:
             top_left_coords=top_left_coords,
             unknown2=unknown2,
         )
+
+    def write(self, context: "WritingContext"):
+        """Write inline (no asset header)."""
+        context.stream.writeUInt32(self.texture_tile)
+        context.stream.writeFloat(self.bottom_left_coords[0])
+        context.stream.writeFloat(self.bottom_left_coords[1])
+        context.stream.writeFloat(self.bottom_right_coords[0])
+        context.stream.writeFloat(self.bottom_right_coords[1])
+        context.stream.writeFloat(self.top_right_coords[0])
+        context.stream.writeFloat(self.top_right_coords[1])
+        context.stream.writeFloat(self.top_left_coords[0])
+        context.stream.writeFloat(self.top_left_coords[1])
+        context.stream.writeUInt16(self.unknown2)
 
 
 def get_blend_bit_size(version: int) -> int:
@@ -306,3 +336,59 @@ class BlendTileData:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
+    
+    def write(self, context: "WritingContext"):
+        with context.write_asset(self.asset_name, self.version):
+            context.stream.writeUInt32(len(self.tiles) * len(self.tiles[0]))
+            context.stream.writeUInt16Array2D(self.tiles)
+
+            blend_bit_size = get_blend_bit_size(self.version)
+            context.stream.writeUIntArray2D(self.blends, blend_bit_size)
+            context.stream.writeUIntArray2D(self.three_way_blends, blend_bit_size)
+            context.stream.writeUIntArray2D(self.cliff_textures, blend_bit_size)
+
+            if self.version > 6:
+                context.stream.writeSingleBitBooleanArray2D(self.impassability)
+
+            if self.version >= 10:
+                context.stream.writeSingleBitBooleanArray2D(self.impassability_to_players)
+
+            if self.version >= 11:
+                context.stream.writeSingleBitBooleanArray2D(self.passage_widths)
+
+            if self.version >= 14 and self.version < 25:
+                context.stream.writeSingleBitBooleanArray2D(self.taintability)
+
+            if self.version >= 15:
+                context.stream.writeSingleBitBooleanArray2D(self.extra_passability)
+
+            if self.version >= 16 and self.version < 25:
+                context.stream.writeByteArray2DAsEnum(self.flammability)
+
+            if self.version >= 17:
+                context.stream.writeSingleBitBooleanArray2D(self.visibility, pad_value=0xFF)
+
+            if self.version >= 24:
+                # TODO: Are these in the right order?
+                context.stream.writeSingleBitBooleanArray2D(self.buildability)
+                context.stream.writeSingleBitBooleanArray2D(self.impassability_to_air_units)
+                context.stream.writeSingleBitBooleanArray2D(self.tiberium_growability)
+
+            if self.version >= 25:
+                context.stream.writeByteArray2D(self.dynamic_shrubbery_density)
+
+            context.stream.writeUInt32(self.texture_cell_count)
+            context.stream.writeUInt32(len(self.blend_descriptions) + 1)
+            context.stream.writeUInt32(len(self.cliff_texture_mappings) + 1)
+            context.stream.writeUInt32(len(self.textures))
+            for texture in self.textures:
+                texture.write(context)
+
+            context.stream.writeUInt32(self.magic_value1)
+            context.stream.writeUInt32(self.magic_value2)
+
+            for blend_description in self.blend_descriptions:
+                blend_description.write(context)
+
+            for cliff_texture_mapping in self.cliff_texture_mappings:
+                cliff_texture_mapping.write(context)

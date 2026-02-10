@@ -21,7 +21,7 @@ Each asset has its own test file, and test data is stored in the `tests/data/` d
 - `test_global_lighting.py` - Tests for GlobalLighting asset
 - `test_height_map.py` - Tests for HeightMapData asset
 - `test_library_map_lists.py` - Tests for LibraryMapLists asset
-- `test_mp_positions.py` - Tests for MPPositionsList asset
+- `test_mp_positions.py` - Tests for MPPositionList asset
 - `test_named_cameras.py` - Tests for NamedCameras asset
 - `test_object_list.py` - Tests for ObjectsList asset
 - `test_player_scripts.py` - Tests for PlayerScriptsList asset
