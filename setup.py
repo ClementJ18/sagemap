@@ -19,6 +19,7 @@ setup(
     url="https://github.com/ClementJ18/sagemap",
     packages=find_packages(include=["sagemap", "sagemap.*"]),
     description="A library for reading and writing .map files from SAGE engine games.",
+    requires=["reversebox"],
     long_description_content_type="text/markdown",
     long_description=readme,
     python_requires=">=3.8",
