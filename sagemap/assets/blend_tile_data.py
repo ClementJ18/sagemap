@@ -290,7 +290,7 @@ class BlendTileData:
 
             texture_count = context.stream.readUInt32()
             textures = []
-            for i in range(texture_count):
+            for _ in range(texture_count):
                 textures.append(BlendTileTexture.parse(context))
 
             # Can be a variety of values, don't know what it means.

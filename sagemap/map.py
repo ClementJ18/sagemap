@@ -107,9 +107,7 @@ class Map:
         self.castle_templates = None
         self.skybox_settings = None
 
-    def parse(self, context: ParsingContext):
-        context = context
-        
+    def parse(self, context: ParsingContext):      
         context.parse_assets()
         self.assets = context.assets
         self.compression_bytes = context.compression_bytes
@@ -118,8 +116,6 @@ class Map:
             asset_name = context.parse_asset_name()
             context.logger.info(f"Processing asset: {asset_name}")
             self.parse_asset(asset_name, context)
-
-        context = None
 
     def parse_asset(self, asset_name: str, context: ParsingContext):
         if asset_name == AssetList.asset_name:

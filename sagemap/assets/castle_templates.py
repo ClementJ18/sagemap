@@ -90,8 +90,12 @@ class CastlePerimeter:
         name = None
         perimeter_points = []
 
-        if has_perimeter:
-            name = context.stream.readUInt16PrefixedAsciiString()
+        if has_perimeter:   
+
+            # the version is a tentative guess as this field does not exist in the OpenSAGE parser     
+            if version >= 5:
+                name = context.stream.readUInt16PrefixedAsciiString()
+    
             perimeter_point_count = context.stream.readUInt32()
             
             for _ in range(perimeter_point_count):
@@ -106,7 +110,11 @@ class CastlePerimeter:
     def write(self, context: "WritingContext", version: int):
         context.stream.writeBoolUInt32Checked(self.has_perimeter)
         if self.has_perimeter:
-            context.stream.writeUInt16PrefixedAsciiString(self.name if self.name else "")
+
+            # the version is a tentative guess as this field does not exist in the OpenSAGE parser
+            if version >= 5:
+                context.stream.writeUInt16PrefixedAsciiString(self.name)
+    
             context.stream.writeUInt32(len(self.perimeter_points))
             for point in self.perimeter_points:
                 point.write(context, version)
