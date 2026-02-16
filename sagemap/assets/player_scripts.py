@@ -1,13 +1,80 @@
 from dataclasses import dataclass, field
+from enum import IntEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..context import ParsingContext, WritingContext
 
 
+class ScriptArgumentType(IntEnum):
+    INTEGER = 0
+    REAL_NUMBER = 1
+    SCRIPT_NAME = 2
+    TEAM_NAME = 3
+    COUNTER_NAME = 4
+    FLAG_NAME = 5
+    COMPARISON = 6
+    WAYPOINT_NAME = 7
+    BOOLEAN = 8
+    TRIGGER_AREA_NAME = 9
+    TEXT = 10
+    PLAYER_NAME = 11
+    SOUND_NAME = 12
+    SUBROUTINE_NAME = 13
+    UNIT_NAME = 14
+    OBJECT_NAME = 15
+    POSITION_COORDINATE = 16
+    ANGLE = 17
+    TEAM_STATE = 18
+    RELATION = 19
+    AI_MOOD = 20
+    SPEECH_NAME = 21
+    MUSIC_NAME = 22
+    MOVIE_NAME = 23
+    WAYPOINT_PATH_NAME = 24
+    LOCALIZED_STRING_NAME = 25
+    BRIDGE_NAME = 26
+    UNIT_OR_STRUCTURE_KIND = 27
+    ATTACK_PRIORITY_SET_NAME = 28
+    RADAR_EVENT_TYPE = 29
+    SPECIAL_POWER_NAME = 30
+    SCIENCE_NAME = 31
+    UPGRADE_NAME = 32
+    UNIT_ABILITY_NAME = 33
+    BOUNDARY_NAME = 34
+    BUILDABILITY = 35
+    SURFACE_TYPE = 36
+    CAMERA_SHAKE_INTENSITY = 37
+    COMMAND_BUTTON_NAME = 38
+    FONT_NAME = 39
+    OBJECT_STATUS = 40
+    TEAM_ABILITY_NAME = 41
+    SKIRMISH_APPROACH_PATH = 42
+    COLOR = 43
+    EMOTICON_NAME = 44
+    OBJECT_PANEL_FLAG = 45
+    FACTION_NAME = 46
+    OBJECT_TYPE_LIST_NAME = 47
+    MAP_REVEAL_NAME = 48
+    SCIENCE_AVAILABILITY_NAME = 49
+    EVACUATE_CONTAINER_SIDE = 50
+    PERCENTAGE = 51
+    PERCENTAGE2 = 52
+    UNIT_REFERENCE = 54
+    TEAM_REFERENCE = 55
+    NEAR_OR_FAR = 56
+    MATH_OPERATOR = 57
+    MODEL_CONDITION = 58
+    AUDIO_NAME = 59
+    REVERB_ROOM_TYPE = 60
+    OBJECT_TYPE = 61
+    HERO = 62
+    EMOTION = 63
+
+
 @dataclass
 class ScriptArgument:
-    type: int
+    type: ScriptArgumentType
     int_value: int | None = None
     float_value: float | None = None
     string_value: str | None = None
@@ -15,13 +82,13 @@ class ScriptArgument:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        argument_type = context.stream.readUInt32()
+        argument_type = ScriptArgumentType(context.stream.readUInt32())
         int_value = None
         float_value = None
         string_value = None
         position_value = None
 
-        if argument_type == 16:  # Coordinate
+        if argument_type == ScriptArgumentType.POSITION_COORDINATE:
             position_value = (
                 context.stream.readFloat(),
                 context.stream.readFloat(),
@@ -41,9 +108,9 @@ class ScriptArgument:
         )
     
     def write(self, context: "WritingContext"):
-        context.stream.writeUInt32(self.type)
+        context.stream.writeUInt32(self.type.value)
 
-        if self.type == 16:  # Coordinate
+        if self.type == ScriptArgumentType.POSITION_COORDINATE:
             if self.position_value is None:
                 raise ValueError("position_value must be set for Coordinate arguments")
             context.stream.writeFloat(self.position_value[0])

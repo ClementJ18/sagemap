@@ -6,6 +6,37 @@ if TYPE_CHECKING:
 
 
 @dataclass
+class HeightMapBorder:
+    corner1: tuple[int, int]
+    position: tuple[int, int]
+
+    @classmethod
+    def parse(cls, context: "ParsingContext", version: int):
+        if version >= 6:
+            corner1X = context.stream.readUInt32()
+            corner1Y = context.stream.readUInt32()
+        else:
+            corner1X = 0
+            corner1Y = 0
+        
+        x = context.stream.readUInt32()
+        y = context.stream.readUInt32()
+
+        return cls(
+            corner1=(corner1X, corner1Y),
+            position=(x, y)
+        )
+    
+    def write(self, context: "WritingContext", version: int):
+        if version >= 6:
+            context.stream.writeUInt32(self.corner1[0])
+            context.stream.writeUInt32(self.corner1[1])
+        
+        context.stream.writeUInt32(self.position[0])
+        context.stream.writeUInt32(self.position[1])
+
+
+@dataclass
 class HeightMapData:
     asset_name = "HeightMapData"
 
@@ -13,7 +44,7 @@ class HeightMapData:
     width: int
     height: int
     border_width: int
-    borders: list[dict[str, tuple[int, int]]]
+    borders: list[HeightMapBorder]
     area: int
     min_height: int
     max_height: int
@@ -31,18 +62,7 @@ class HeightMapData:
             border_count = context.stream.readUInt32()
             borders = []
             for _ in range(border_count):
-                if asset_ctx.version >= 6:
-                    corner1X = context.stream.readUInt32()
-                    corner1Y = context.stream.readUInt32()
-                    x = context.stream.readUInt32()
-                    y = context.stream.readUInt32()
-                else:
-                    corner1X = 0
-                    corner1Y = 0
-                    x = context.stream.readUInt32()
-                    y = context.stream.readUInt32()
-
-                borders.append({"corner1": (corner1X, corner1Y), "position": (x, y)})
+                borders.append(HeightMapBorder.parse(context, asset_ctx.version))
 
             area = context.stream.readUInt32()
             if area != width * height:

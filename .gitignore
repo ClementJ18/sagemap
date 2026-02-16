@@ -192,3 +192,5 @@ Mission_compressed.map
 Mission_uncompressed.map
 texture_mapping.json
 map wor rivendell.map
+lint_test.py
+Mission.json
