@@ -15,6 +15,7 @@ from .errors import (
     InsufficientTreesNearWirtschaftError,
     ExcessiveObjectCountWarning,
     LowExpansionPlotFlagCountInfo,
+    CameraMaxHeightTooLowError,
     MapParsingError,
     LintError,
     MissingSpawnWaypointError
@@ -95,6 +96,10 @@ def lint_map_validation(map_obj: "Map") -> list[LintError]:
 
         if expansion_plot_flag_count <= 1:
             errors.append(LowExpansionPlotFlagCountInfo(expansion_plot_flag_count))
+
+        camera_max_height = map_obj.world_info.properties.get("cameraMaxHeight", {}).get("value")
+        if camera_max_height is not None and camera_max_height < 533:
+            errors.append(CameraMaxHeightTooLowError(camera_max_height))
 
         if not has_farm_templates:
             errors.append(MissingFarmTemplateError())

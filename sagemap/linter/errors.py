@@ -8,6 +8,7 @@ class LintError:
     severity = Severity.ERROR
     message_template = "An unspecified lint error occurred."
     code = "MAP-000"
+    extra: dict
 
     def __init__(self, *, code=None, message_template=None, severity=None, extra=None):
         self.code = code or self.code
@@ -159,6 +160,16 @@ class LowExpansionPlotFlagCountInfo(LintError):
     def __init__(self, count):
         super().__init__(
             extra={"count": count}
+        )
+
+class CameraMaxHeightTooLowError(LintError):
+    severity = Severity.ERROR
+    message_template = "Map cameraMaxHeight is {height}, which is below the minimum of 533."
+    code = "MAP-017"
+
+    def __init__(self, height):
+        super().__init__(
+            extra={"height": height}
         )
 
 class MapParsingError(LintError):
