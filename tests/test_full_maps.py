@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from reversebox.compression.compression_refpack import RefpackHandler
 
 from sagemap import parse_map_from_path
 from sagemap.map import write_map
@@ -68,7 +69,7 @@ def test_write_map(map_path):
         compressed_data = f.read()
 
     from reversebox.compression.compression_refpack import RefpackHandler
-    
+
     try:
         original_decompressed = RefpackHandler().decompress_data(compressed_data)
     except Exception:
@@ -86,7 +87,7 @@ def test_write_map_compressed(map_path):
     2. Parsed map can be written back with compression
     3. For originally compressed files, compressed bytes match the original
     4. The original game executable can read the compressed output
-    
+
     Note: This test only validates matching bytes for files that were originally compressed.
     """
     map_obj = parse_map_from_path(str(map_path))
@@ -96,29 +97,27 @@ def test_write_map_compressed(map_path):
         ea_compression = f.read(8)
         if not ea_compression.startswith(b"EAR"):
             f.seek(0)
-        original_data = f.read()
 
-    from reversebox.compression.compression_refpack import RefpackHandler
-    
-    # Check if the original file was compressed
-    is_compressed = False
-    try:
-        RefpackHandler().decompress_data(original_data)
-        is_compressed = True
-    except Exception:
+        original_data = f.read()
         is_compressed = False
+        try:
+            RefpackHandler().decompress_data(original_data)
+            is_compressed = True
+            f.seek(0)
+            original_data = f.read()
+        except Exception:
+            is_compressed = False
 
     if is_compressed:
-        # For compressed files, verify the compressed output matches
         written_compressed = write_map(map_obj, compress=True)
         assert written_compressed is not None, f"Failed to write compressed map: {map_path.name}"
         assert written_compressed == original_data, f"Compressed bytes don't match original for: {map_path.name}"
     else:
-        # For uncompressed files, just verify we can compress and decompress
         written_compressed = write_map(map_obj, compress=True)
         assert written_compressed is not None, f"Failed to write compressed map: {map_path.name}"
-        
-        # Verify the compressed data can be decompressed back to the original
+
         decompressed = RefpackHandler().decompress_data(written_compressed)
         written_uncompressed = write_map(map_obj, compress=False)
-        assert decompressed == written_uncompressed, f"Compressed data doesn't decompress correctly for: {map_path.name}"
+        assert decompressed == written_uncompressed, (
+            f"Compressed data doesn't decompress correctly for: {map_path.name}"
+        )

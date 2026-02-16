@@ -57,7 +57,7 @@ class BuildListInfo:
             repairable=repairable,
             unknown=unknown,
         )
-    
+
     def write(self, context: "WritingContext", has_asset_list: bool):
         context.stream.writeUInt16PrefixedAsciiString(self.build_name)
         context.stream.writeUInt16PrefixedAsciiString(self.template_name)
@@ -106,7 +106,7 @@ class BuildList:
             faction_name_property=faction_name_property,
             build_list=build_list,
         )
-    
+
     def write(self, context: "WritingContext", has_asset_list: bool):
         if has_asset_list:
             context.stream.writeUInt16PrefixedAsciiString(self.faction_name)
@@ -145,7 +145,7 @@ class BuildLists:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext", has_asset_list: bool):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(len(self.build_lists))
@@ -174,7 +174,7 @@ class Player:
             properties=properties,
             build_list_items=build_lists,
         )
-    
+
     def write(self, context: "WritingContext", has_asset_list: bool):
         context.write_properties(context.dict_to_properties(self.properties))
         context.stream.writeUInt32(len(self.build_list_items))
@@ -230,7 +230,7 @@ class SidesList:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext", has_asset_list: bool):
         with context.write_asset(self.asset_name, self.version):
             if self.version >= 6:

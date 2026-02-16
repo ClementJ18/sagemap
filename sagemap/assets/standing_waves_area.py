@@ -97,7 +97,7 @@ class StandingWaveArea:
             enable_pca_wave=enable_pca_wave,
             wave_particle_fx_name=wave_particle_fx_name,
         )
-    
+
     def write(self, context: "WritingContext", version: int):
         context.stream.writeUInt32(self.unique_id)
         context.stream.writeUInt16PrefixedAsciiString(self.name)
@@ -155,7 +155,7 @@ class StandingWaveAreas:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(len(self.areas))

@@ -38,7 +38,7 @@ class Object:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeVector3(self.position)
@@ -75,7 +75,7 @@ class ObjectsList:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             for obj in self.object_list:

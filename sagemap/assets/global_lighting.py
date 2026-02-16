@@ -44,7 +44,7 @@ class MapColorArgb:
             g=g,
             b=b,
         )
-    
+
     def write(self, context: "WritingContext"):
         value = (self.a << 24) | (self.r << 16) | (self.g << 8) | self.b
         context.stream.writeUInt32(value)
@@ -67,7 +67,7 @@ class GlobalLight:
             color=color,
             direction=direction,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeVector3(self.ambient)
         context.stream.writeVector3(self.color)
@@ -129,7 +129,7 @@ class GlobalLightingConfiguration:
             object_accent2=object_accent2,
             infantry_accent2=infantry_accent2,
         )
-    
+
     def write(self, context: "WritingContext", version: int):
         self.terrain_sun.write(context)
 
@@ -209,7 +209,7 @@ class GlobalLighting:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(self.time_of_the_day.value)

@@ -37,7 +37,7 @@ class PostEffectParameter:
             type=param_type,
             value=data,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeUInt16PrefixedAsciiString(self.name)
         context.stream.writeUInt16PrefixedAsciiString(self.type)
@@ -85,7 +85,7 @@ class PostEffect:
             blend_factor=blend_factor,
             lookup_image=lookup_image,
         )
-    
+
     def write(self, context: "WritingContext", version: int):
         context.stream.writeUInt16PrefixedAsciiString(self.name)
 
@@ -123,7 +123,7 @@ class PostEffectsChunk:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             if self.version >= 2:

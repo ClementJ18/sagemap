@@ -18,20 +18,17 @@ class HeightMapBorder:
         else:
             corner1X = 0
             corner1Y = 0
-        
+
         x = context.stream.readUInt32()
         y = context.stream.readUInt32()
 
-        return cls(
-            corner1=(corner1X, corner1Y),
-            position=(x, y)
-        )
-    
+        return cls(corner1=(corner1X, corner1Y), position=(x, y))
+
     def write(self, context: "WritingContext", version: int):
         if version >= 6:
             context.stream.writeUInt32(self.corner1[0])
             context.stream.writeUInt32(self.corner1[1])
-        
+
         context.stream.writeUInt32(self.position[0])
         context.stream.writeUInt32(self.position[1])
 
@@ -97,7 +94,7 @@ class HeightMapData:
             asset_ctx.start_pos,
             asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(self.width)
@@ -106,13 +103,7 @@ class HeightMapData:
 
             context.stream.writeUInt32(len(self.borders))
             for border in self.borders:
-                corner1X, corner1Y = border["corner1"]
-                x, y = border["position"]
-                if self.version >= 6:
-                    context.stream.writeUInt32(corner1X)
-                    context.stream.writeUInt32(corner1Y)
-                context.stream.writeUInt32(x)
-                context.stream.writeUInt32(y)
+                border.write(context, self.version)
 
             context.stream.writeUInt32(self.area)
 

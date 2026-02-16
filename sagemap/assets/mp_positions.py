@@ -59,6 +59,7 @@ class MPPosition:
                 for restriction in self.side_restrictions:
                     context.stream.writeUInt16PrefixedAsciiString(restriction)
 
+
 @dataclass
 class MPPositionList:
     asset_name = "MPPositionList"
@@ -86,7 +87,7 @@ class MPPositionList:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             for position in self.positions:

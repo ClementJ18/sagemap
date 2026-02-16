@@ -107,7 +107,7 @@ class Map:
         self.castle_templates = None
         self.skybox_settings = None
 
-    def parse(self, context: ParsingContext):      
+    def parse(self, context: ParsingContext):
         context.parse_assets()
         self.assets = context.assets
         self.compression_bytes = context.compression_bytes
@@ -204,12 +204,12 @@ class Map:
             return [self._serialize(item) for item in obj]
         else:
             return obj
-        
+
     def write(self, context: WritingContext) -> bytes:
         if self.assets:
             context.assets_by_index = self.assets.copy()
             context.index_by_asset = {name: idx for idx, name in self.assets.items()}
-        
+
         if self.asset_list is not None:
             context.write_asset_name(AssetList.asset_name)
             self.asset_list.write(context)
@@ -321,13 +321,13 @@ class Map:
 
         asset_data = context.stream.getvalue()
         header_stream = BinaryStream(io.BytesIO())
-        
+
         compression_bytes = self.compression_bytes if self.compression_bytes else "    "
         header_stream.writeFourCc(compression_bytes)
-        
+
         asset_count = len(context.assets_by_index)
         header_stream.writeUInt32(asset_count)
-        
+
         for i in range(asset_count, 0, -1):
             asset_name = context.assets_by_index[i]
             header_stream.writeString(asset_name)
@@ -361,11 +361,12 @@ def parse_map(file: io.BufferedReader) -> Map:
 
     return map
 
+
 def write_map(map: Map, compress: bool) -> bytes:
     stream = BinaryStream(io.BytesIO())
     context = WritingContext(stream)
     uncompressed_data = map.write(context)
-    
+
     if compress:
         compressed_data = RefpackHandler().compress_data(uncompressed_data)
         if map.ea_compression_header:
@@ -375,14 +376,16 @@ def write_map(map: Map, compress: bool) -> bytes:
             data = header_stream.getvalue() + compressed_data
         else:
             data = compressed_data
-        
+
         return data
-        
+
     return uncompressed_data
+
 
 def parse_map_from_path(path: str) -> Map:
     with open(path, "rb") as file:
         return parse_map(file)
+
 
 def write_map_to_path(map: Map, path: str, compress: bool):
     data = write_map(map, compress)

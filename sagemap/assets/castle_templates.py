@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..context import ParsingContext, WritingContext
 
+
 @dataclass
 class CastleTemplate:
     name: str
@@ -34,7 +35,7 @@ class CastleTemplate:
             priority=priority,
             phase=phase,
         )
-    
+
     def write(self, context: "WritingContext", version: int):
         context.stream.writeUInt16PrefixedAsciiString(self.name)
         context.stream.writeUInt16PrefixedAsciiString(self.template_name)
@@ -44,6 +45,7 @@ class CastleTemplate:
         if version >= 4:
             context.stream.writeUInt32(self.priority)
             context.stream.writeUInt32(self.phase)
+
 
 @dataclass
 class PerimeterPoint:
@@ -67,7 +69,7 @@ class PerimeterPoint:
             y=y,
             z=z,
         )
-    
+
     def write(self, context: "WritingContext", version: int):
         if version >= 3:
             context.stream.writeFloat(self.x)
@@ -76,6 +78,7 @@ class PerimeterPoint:
             context.stream.writeInt32(int(self.x))
             context.stream.writeInt32(int(self.y))
             context.stream.writeInt32(int(self.z))
+
 
 @dataclass
 class CastlePerimeter:
@@ -86,18 +89,17 @@ class CastlePerimeter:
     @classmethod
     def parse(cls, context: "ParsingContext", version: int):
         has_perimeter = context.stream.readBoolUInt32Checked()
-        
+
         name = None
         perimeter_points = []
 
-        if has_perimeter:   
-
-            # the version is a tentative guess as this field does not exist in the OpenSAGE parser     
+        if has_perimeter:
+            # the version is a tentative guess as this field does not exist in the OpenSAGE parser
             if version >= 5:
                 name = context.stream.readUInt16PrefixedAsciiString()
-    
+
             perimeter_point_count = context.stream.readUInt32()
-            
+
             for _ in range(perimeter_point_count):
                 perimeter_points.append(PerimeterPoint.parse(context, version))
 
@@ -106,15 +108,14 @@ class CastlePerimeter:
             name=name,
             perimeter_points=perimeter_points,
         )
-    
+
     def write(self, context: "WritingContext", version: int):
         context.stream.writeBoolUInt32Checked(self.has_perimeter)
         if self.has_perimeter:
-
             # the version is a tentative guess as this field does not exist in the OpenSAGE parser
             if version >= 5:
                 context.stream.writeUInt16PrefixedAsciiString(self.name)
-    
+
             context.stream.writeUInt32(len(self.perimeter_points))
             for point in self.perimeter_points:
                 point.write(context, version)
@@ -133,10 +134,10 @@ class CastleTemplates:
 
     @classmethod
     def parse(cls, context: "ParsingContext"):
-        with context.read_asset() as asset_ctx:          
+        with context.read_asset() as asset_ctx:
             property_key = context.parse_asset_property_key()
             template_count = context.stream.readUInt32()
-            
+
             templates = []
             for _ in range(template_count):
                 templates.append(CastleTemplate.parse(context, asset_ctx.version))
@@ -145,16 +146,15 @@ class CastleTemplates:
             if asset_ctx.version >= 2:
                 perimeter = CastlePerimeter.parse(context, asset_ctx.version)
 
-
         return cls(
-            version=asset_ctx.version, 
-            property_key=property_key, 
-            templates=templates, 
+            version=asset_ctx.version,
+            property_key=property_key,
+            templates=templates,
             perimeter=perimeter,
-            start_pos=asset_ctx.start_pos, 
-            end_pos=asset_ctx.end_pos
+            start_pos=asset_ctx.start_pos,
+            end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.write_asset_property_key(self.property_key)
@@ -164,5 +164,3 @@ class CastleTemplates:
 
             if self.version >= 2:
                 self.perimeter.write(context, self.version)
-    
-

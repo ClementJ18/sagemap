@@ -71,6 +71,7 @@ class StandingWaterArea:
         context.stream.writeUInt16PrefixedAsciiString(self.fx_shader)
         context.stream.writeUInt16PrefixedAsciiString(self.depth_color)
 
+
 @dataclass
 class StandingWaterAreas:
     asset_name = "StandingWaterAreas"
@@ -96,7 +97,7 @@ class StandingWaterAreas:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(len(self.areas))

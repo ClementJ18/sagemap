@@ -146,21 +146,23 @@ class WritingContext:
     def add_asset(self, asset_name: str) -> int:
         if asset_name in self.index_by_asset:
             return self.index_by_asset[asset_name]
-        
+
         index = len(self.assets_by_index) + 1
         self.assets_by_index[index] = asset_name
         self.index_by_asset[asset_name] = index
 
         return index
-    
-    def dict_to_properties(self, properties: dict[str, Property]) -> list[tuple[str, AssetPropertyType, str | int | float | bool]]:
+
+    def dict_to_properties(
+        self, properties: dict[str, Property]
+    ) -> list[tuple[str, AssetPropertyType, str | int | float | bool]]:
         result = []
         for name, prop in properties.items():
             if name != prop["name"]:
                 raise ValueError(f"Property name mismatch: key '{name}' does not match property name '{prop['name']}'")
             result.append((prop["name"], prop["type"], prop["value"]))
         return result
-    
+
     def write_properties(self, properties: list[tuple[str, AssetPropertyType, str | int | float | bool]]):
         self.stream.writeUInt16(len(properties))
         for name, ptype, value in properties:
@@ -180,7 +182,7 @@ class WritingContext:
                 self.stream.writeUInt16PrefixedUnicodeString(value)
             else:
                 raise ValueError(f"Unexpected property type: {ptype}")
-            
+
     def write_asset_name(self, asset_name: str):
         asset_index = self.add_asset(asset_name)
         self.stream.writeUInt32(asset_index)

@@ -31,7 +31,7 @@ class FreeCameraAnimationCameraFrame:
             rotation=rotation,
             fov=fov,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeUInt32(self.frame_index)
         context.stream.writeFourCc(self.interpolation_type[::-1])  # Reverse back to big endian
@@ -54,7 +54,7 @@ class FreeCameraAnimationFrameData:
         return cls(
             frames=camera_frames,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeUInt32(len(self.frames))
         for frame in self.frames:
@@ -114,7 +114,7 @@ class LookAtCameraAnimationCameraFrame:
             roll=roll,
             fov=fov,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeUInt32(self.frame_index)
         context.stream.writeFourCc(self.interpolation_type[::-1])
@@ -144,7 +144,7 @@ class LookAtCameraAnimationFrameData:
             camera_frames=camera_frames,
             look_at_frames=look_at_frames,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeUInt32(len(self.camera_frames))
         for frame in self.camera_frames:
@@ -190,7 +190,7 @@ class CameraAnimation:
             start_offset=start_offset,
             frame_data=frame_data,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeFourCc(self.animation_type[::-1])
         context.stream.writeUInt16PrefixedAsciiString(self.name)
@@ -221,7 +221,7 @@ class CameraAnimationList:
         return cls(
             version=asset_ctx.version, animations=animations, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(len(self.animations))

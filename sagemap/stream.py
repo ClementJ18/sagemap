@@ -128,14 +128,14 @@ class BinaryStream:
 
     def readVector2(self) -> tuple[float, float]:
         return (self.readFloat(), self.readFloat())
-    
+
     def writeVector2(self, value: tuple[float, float]):
         self.writeFloat(value[0])
         self.writeFloat(value[1])
 
     def readVector3(self) -> tuple[float, float, float]:
         return (self.readFloat(), self.readFloat(), self.readFloat())
-    
+
     def writeVector3(self, value: tuple[float, float, float]):
         self.writeFloat(value[0])
         self.writeFloat(value[1])
@@ -143,7 +143,7 @@ class BinaryStream:
 
     def readVector4(self) -> tuple[float, float, float, float]:
         return (self.readFloat(), self.readFloat(), self.readFloat(), self.readFloat())
-    
+
     def writeVector4(self, value: tuple[float, float, float, float]):
         self.writeFloat(value[0])
         self.writeFloat(value[1])
@@ -313,7 +313,7 @@ class BinaryStream:
         """
         actual_width = len(array2d)
         height = len(array2d[0]) if actual_width > 0 else 0
-        
+
         if width is None:
             width = actual_width
 
@@ -326,7 +326,7 @@ class BinaryStream:
 
                 bool_value = array2d[x][y] if x < actual_width else False
                 if bool_value:
-                    value |= (1 << (x % 8))
+                    value |= 1 << (x % 8)
                 elif pad_value != 0:
                     # When pad_value is non-zero, we need to explicitly clear False bits
                     value &= ~(1 << (x % 8))

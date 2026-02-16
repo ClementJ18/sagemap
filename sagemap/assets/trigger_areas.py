@@ -37,7 +37,7 @@ class TriggerArea:
             points=points,
             unknown2=unknown2,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeUInt16PrefixedAsciiString(self.name)
         context.stream.writeUInt16PrefixedAsciiString(self.layer_name)
@@ -74,7 +74,7 @@ class TriggerAreas:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(len(self.trigger_areas))

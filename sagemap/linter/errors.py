@@ -1,8 +1,14 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sagemap.assets.object_list import Object
+
 
 class Severity:
     INFO = "INFO"
     WARNING = "WARNING"
     ERROR = "ERROR"
+
 
 class LintError:
     severity = Severity.ERROR
@@ -22,19 +28,19 @@ class LintError:
 
     def __str__(self):
         return f"[{self.code}] {self.message}"
-    
+
     def __repr__(self):
         return f"LintError(code={self.code}, message={self.message}, severity={self.severity}, extra={self.extra})"
-    
+
+
 class ContainsExpansionFlagError(LintError):
     severity = Severity.ERROR
     message_template = "Map contains ExpansionFlag at position {position} which is not supported."
     code = "MAP-002"
 
-    def __init__(self, position):
-        super().__init__(
-            extra={"position": position}
-        )
+    def __init__(self, obj: "Object"):
+        super().__init__(extra={"position": obj.position, "id": obj.properties["uniqueID"]["value"]})
+
 
 class StartWaypointForNonExistentPlayerError(LintError):
     severity = Severity.ERROR
@@ -42,9 +48,8 @@ class StartWaypointForNonExistentPlayerError(LintError):
     code = "MAP-003"
 
     def __init__(self, waypoint_name):
-        super().__init__(
-            extra={"waypoint_name": waypoint_name}
-        )
+        super().__init__(extra={"waypoint_name": waypoint_name})
+
 
 class SpawnWaypointForNonExistentPlayerError(LintError):
     severity = Severity.ERROR
@@ -52,19 +57,17 @@ class SpawnWaypointForNonExistentPlayerError(LintError):
     code = "MAP-004"
 
     def __init__(self, waypoint_name):
-        super().__init__(
-            extra={"waypoint_name": waypoint_name}
-        )
+        super().__init__(extra={"waypoint_name": waypoint_name})
+
 
 class RotatedPlotFlagError(LintError):
     severity = Severity.ERROR
     message_template = "Map contains PlotFlag at position {position} with non-zero angle which may cause issues."
     code = "MAP-005"
 
-    def __init__(self, position):
-        super().__init__(
-            extra={"position": position}
-        )
+    def __init__(self, obj: "Object"):
+        super().__init__(extra={"position": obj.position, "id": obj.properties["uniqueID"]["value"]})
+
 
 class MissingFarmTemplateError(LintError):
     severity = Severity.ERROR
@@ -78,19 +81,22 @@ class MissingPlayerTypesError(LintError):
     code = "MAP-007"
 
     def __init__(self, missing_players):
-        super().__init__(
-            extra={"missing_players": missing_players}
-        )
+        super().__init__(extra={"missing_players": missing_players})
+
 
 class MissingGollumSpawnScriptError(LintError):
     severity = Severity.ERROR
-    message_template = "Map does not contain any SkirmishGollum_Spawn script, which may cause issues with Gollum spawns."
+    message_template = (
+        "Map does not contain any SkirmishGollum_Spawn script, which may cause issues with Gollum spawns."
+    )
     code = "MAP-008"
+
 
 class MissingGollumSpawnPointError(LintError):
     severity = Severity.ERROR
     message_template = "Map does not contain any Gollum spawn points, which may cause issues with Gollum spawns."
     code = "MAP-009"
+
 
 class MissingSpawnWaypointError(LintError):
     severity = Severity.ERROR
@@ -98,49 +104,65 @@ class MissingSpawnWaypointError(LintError):
     code = "MAP-010"
 
     def __init__(self, player_num):
-        super().__init__(
-            extra={"player_num": player_num}
-        )
+        super().__init__(extra={"player_num": player_num})
+
 
 class NonFlatPlotFlagError(LintError):
     severity = Severity.ERROR
     message_template = "{flag_type} at position {position} is placed on non-flat terrain (radius {radius}), which may cause building issues."
     code = "MAP-011"
 
-    def __init__(self, flag_type, position, radius):
+    def __init__(self, obj: "Object", radius):
         super().__init__(
-            extra={"flag_type": flag_type, "position": position, "radius": radius}
+            extra={
+                "flag_type": obj.type_name,
+                "position": obj.position,
+                "radius": radius,
+                "id": obj.properties["uniqueID"]["value"],
+            }
         )
+
 
 class PlotFlagTooCloseToBoderError(LintError):
     severity = Severity.ERROR
-    message_template = "{flag_type} at position {position} is too close to the world border (minimum distance: 10 units)."
+    message_template = (
+        "{flag_type} at position {position} is too close to the world border (minimum distance: 10 units)."
+    )
     code = "MAP-012"
 
-    def __init__(self, flag_type, position):
+    def __init__(self, obj: "Object"):
         super().__init__(
-            extra={"flag_type": flag_type, "position": position}
+            extra={"flag_type": obj.type_name, "position": obj.position, "id": obj.properties["uniqueID"]["value"]}
         )
+
 
 class InsufficientTreesNearWirtschaftError(LintError):
     severity = Severity.WARNING
     message_template = "WirtschaftPlotFlag at position {position} has insufficient trees nearby (found {tree_count}, required 30 within 30 units)."
     code = "MAP-013"
 
-    def __init__(self, position, tree_count):
+    def __init__(self, obj: "Object", tree_count):
         super().__init__(
-            extra={"position": position, "tree_count": tree_count}
+            extra={"position": obj.position, "tree_count": tree_count, "id": obj.properties["uniqueID"]["value"]}
         )
+
 
 class UnevenFarmTemplateWarning(LintError):
     severity = Severity.WARNING
-    message_template = "FarmTemplate at position {position} is placed on uneven terrain ({flat_percentage:.1f}% flat, threshold 67%)."
+    message_template = (
+        "FarmTemplate at position {position} is placed on uneven terrain ({flat_percentage:.1f}% flat, threshold 67%)."
+    )
     code = "MAP-014"
 
-    def __init__(self, position, flat_percentage):
+    def __init__(self, obj: "Object", flat_percentage):
         super().__init__(
-            extra={"position": position, "flat_percentage": flat_percentage}
+            extra={
+                "position": obj.position,
+                "flat_percentage": flat_percentage,
+                "id": obj.properties["uniqueID"]["value"],
+            }
         )
+
 
 class ExcessiveObjectCountWarning(LintError):
     severity = Severity.WARNING
@@ -148,9 +170,8 @@ class ExcessiveObjectCountWarning(LintError):
     code = "MAP-015"
 
     def __init__(self, object_count, limit):
-        super().__init__(
-            extra={"object_count": object_count, "limit": limit}
-        )
+        super().__init__(extra={"object_count": object_count, "limit": limit})
+
 
 class LowExpansionPlotFlagCountInfo(LintError):
     severity = Severity.INFO
@@ -158,9 +179,8 @@ class LowExpansionPlotFlagCountInfo(LintError):
     code = "MAP-016"
 
     def __init__(self, count):
-        super().__init__(
-            extra={"count": count}
-        )
+        super().__init__(extra={"count": count})
+
 
 class CameraMaxHeightTooLowError(LintError):
     severity = Severity.ERROR
@@ -168,9 +188,8 @@ class CameraMaxHeightTooLowError(LintError):
     code = "MAP-017"
 
     def __init__(self, height):
-        super().__init__(
-            extra={"height": height}
-        )
+        super().__init__(extra={"height": height})
+
 
 class MapParsingError(LintError):
     severity = Severity.ERROR
@@ -178,6 +197,4 @@ class MapParsingError(LintError):
     code = "MAP-999"
 
     def __init__(self, original_exception):
-        super().__init__(
-            extra={"original_exception": str(original_exception)}
-        )
+        super().__init__(extra={"original_exception": str(original_exception)})

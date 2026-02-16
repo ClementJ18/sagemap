@@ -107,7 +107,7 @@ class PolygonTrigger:
             river_alpha,
             points,
         )
-    
+
     def write(self, context: "WritingContext", version: int):
         context.stream.writeUInt16PrefixedAsciiString(self.name)
 
@@ -131,11 +131,11 @@ class PolygonTrigger:
             context.stream.writeUInt16PrefixedAsciiString(self.bump_map_texture)
             context.stream.writeUInt16PrefixedAsciiString(self.sky_texture)
             context.stream.writeBool(self.use_additive_blending)
-            
+
             context.stream.writeUChar(self.river_color[0])
             context.stream.writeUChar(self.river_color[1])
             context.stream.writeUChar(self.river_color[2])
-            
+
             context.stream.writeUChar(self.unknown)
             context.stream.writeVector2(self.uv_scroll_speed)
             context.stream.writeFloat(self.river_alpha)
@@ -177,7 +177,7 @@ class PolygonTriggers:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(len(self.polygon_triggers))

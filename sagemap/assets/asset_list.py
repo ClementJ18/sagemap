@@ -20,7 +20,7 @@ class AssetListItem:
             type_id=type_id,
             instance_id=instance_id,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeUInt32(self.type_id)
         context.stream.writeUInt32(self.instance_id)
@@ -48,7 +48,7 @@ class AssetList:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(len(self.asset_names))

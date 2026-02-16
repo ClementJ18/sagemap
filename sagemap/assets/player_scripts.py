@@ -70,6 +70,8 @@ class ScriptArgumentType(IntEnum):
     OBJECT_TYPE = 61
     HERO = 62
     EMOTION = 63
+    UNKNOWN_1 = 64
+    OBJECTIVE_COMPLETE = 77
 
 
 @dataclass
@@ -106,7 +108,7 @@ class ScriptArgument:
             string_value=string_value,
             position_value=position_value,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeUInt32(self.type.value)
 
@@ -179,7 +181,7 @@ class ScriptDerived:
             has_is_enabled_version=has_is_enabled_version,
             has_is_inverted=has_is_inverted,
         )
-    
+
     def write(self, context: "WritingContext", asset_name: str):
         with context.write_asset(asset_name, self.version):
             context.stream.writeUInt32(self.content_type)
@@ -224,7 +226,7 @@ class OrCondition:
         return cls(
             version=asset_ctx.version, conditions=conditions, start_pos=asset_ctx.start_pos, end_pos=asset_ctx.end_pos
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             for condition in self.conditions:
@@ -362,7 +364,7 @@ class Script:
             actions_if_true=actions_if_true,
             actions_if_false=actions_if_false,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt16PrefixedAsciiString(self.name)
@@ -461,7 +463,7 @@ class ScriptGroup:
             return Script.parse(context)
         else:
             raise ValueError(f"Expected ScriptGroup or Script asset, got {asset_name}")
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt16PrefixedAsciiString(self.name)
@@ -505,7 +507,7 @@ class ScriptList:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             for item in self.items:

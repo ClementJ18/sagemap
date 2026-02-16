@@ -16,7 +16,7 @@ class Team:
         return cls(
             properties=properties,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.write_properties(context.dict_to_properties(self.properties))
 

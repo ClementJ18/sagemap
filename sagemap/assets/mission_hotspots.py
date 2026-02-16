@@ -7,7 +7,6 @@ if TYPE_CHECKING:
 
 @dataclass
 class MissionHotSpot:
-
     id: str
     title: str
     description: str
@@ -23,7 +22,7 @@ class MissionHotSpot:
             title=title,
             description=description,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeUInt16PrefixedAsciiString(self.id)
         context.stream.writeUInt16PrefixedAsciiString(self.title)
@@ -53,7 +52,7 @@ class MissionHotSpots:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(len(self.mission_hotspots))

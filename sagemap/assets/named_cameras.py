@@ -40,7 +40,7 @@ class NamedCamera:
             fov=fov,
             unknown=unknown,
         )
-    
+
     def write(self, context: "WritingContext"):
         context.stream.writeVector3(self.look_at_point)
         context.stream.writeUInt16PrefixedAsciiString(self.name)
@@ -76,7 +76,7 @@ class NamedCameras:
             start_pos=asset_ctx.start_pos,
             end_pos=asset_ctx.end_pos,
         )
-    
+
     def write(self, context: "WritingContext"):
         with context.write_asset(self.asset_name, self.version):
             context.stream.writeUInt32(len(self.cameras))
