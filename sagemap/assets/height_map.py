@@ -74,7 +74,8 @@ class HeightMapData:
                         elevation = context.stream.readUInt16()
                     else:
                         elevation = context.stream.readUChar()
-                    elevations[y][x] = elevation
+                    flipped_y = height - 1 - y
+                    elevations[flipped_y][x] = elevation
                     if min_height is None or elevation < min_height:
                         min_height = elevation
                     if max_height is None or elevation > max_height:
@@ -109,7 +110,8 @@ class HeightMapData:
 
             for y in range(self.height):
                 for x in range(self.width):
-                    elevation = self.elevations[y][x]
+                    flipped_y = self.height - 1 - y
+                    elevation = self.elevations[flipped_y][x]
                     if self.version >= 5:
                         context.stream.writeUInt16(elevation)
                     else:

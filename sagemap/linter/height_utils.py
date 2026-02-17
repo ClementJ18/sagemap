@@ -59,6 +59,40 @@ def is_flat_at_position(map_obj: "Map", obj_x: float, obj_y: float, radius: floa
     return True
 
 
+def flatten_position_in_radius(map_obj: "Map", obj_x: float, obj_y: float, radius: float) -> bool:
+    height_map = map_obj.height_map_data
+    border = height_map.border_width
+    world_height = height_map.height - 2 * border
+
+    hm_x = obj_x + border
+    hm_y = border + (world_height - obj_y - 1)
+
+    center_x_int = int(round(hm_x))
+    center_y_int = int(round(hm_y))
+
+    if not (0 <= center_x_int < height_map.width and 0 <= center_y_int < height_map.height):
+        return
+
+    center_height = height_map.elevations[center_y_int][center_x_int]
+
+    radius_int = int(radius) + 1
+
+    for dy in range(-radius_int, radius_int + 1):
+        for dx in range(-radius_int, radius_int + 1):
+            distance = (dx**2 + dy**2) ** 0.5
+            if distance > radius:
+                continue
+
+            sample_x = center_x_int + dx
+            sample_y = center_y_int + dy
+
+            if not (0 <= sample_x < height_map.width and 0 <= sample_y < height_map.height):
+                continue
+
+            if height_map.elevations[sample_y][sample_x] != center_height:
+                map_obj.height_map_data.elevations[sample_y][sample_x] = center_height
+
+
 def get_height_at_position(map_obj: "Map", obj_x: float, obj_y: float) -> int | None:
     """
     Get the height value at a specific object position.

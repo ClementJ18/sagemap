@@ -40,10 +40,10 @@ REQUIRED_PLAYERS = [
 
 FLATNESS_RADIUS = {
     "FestungPlotFlag": 50,
-    "LagerPlotFlag": 30,
+    "LagerPlotFlag": 40,
     "HalfCastlePlotFlag": 40,
     "ExpansionPlotFlag": 30,
-    "WirtschaftPlotFlag": 5,
+    "WirtschaftPlotFlag": 10,
 }
 
 
@@ -175,7 +175,7 @@ def lint_map_flatness(map_obj: "Map") -> list[LintError]:
             errors.append(NonFlatPlotFlagError(flag, radius))
 
     farm_templates = [obj for obj in map_obj.objects_list.object_list if obj.type_name == "FarmTemplate"]
-    farm_check_radius = 10
+    farm_check_radius = 30
     flatness_threshold = 0.67
 
     for farm in farm_templates:

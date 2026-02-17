@@ -62,11 +62,13 @@ class SpawnWaypointForNonExistentPlayerError(LintError):
 
 class RotatedPlotFlagError(LintError):
     severity = Severity.ERROR
-    message_template = "Map contains PlotFlag at position {position} with non-zero angle which may cause issues."
+    message_template = "Map contains {flag_type} at position {position} with non-zero angle which may cause issues."
     code = "MAP-005"
 
     def __init__(self, obj: "Object"):
-        super().__init__(extra={"position": obj.position, "id": obj.properties["uniqueID"]["value"]})
+        super().__init__(
+            extra={"flag_type": obj.type_name, "position": obj.position, "id": obj.properties["uniqueID"]["value"]}
+        )
 
 
 class MissingFarmTemplateError(LintError):
