@@ -188,8 +188,10 @@ class WritingContext:
         self.stream.writeUInt32(asset_index)
 
     def write_asset_property_key(self, property_key: tuple[AssetPropertyType, int, str]):
-        property_key_type, property_key_name_index, _ = property_key
+        property_key_type, _, property_key_name = property_key
         self.stream.writeUChar(property_key_type.value)
+
+        property_key_name_index = self.add_asset(property_key_name)
         self.stream.writeUInt24(property_key_name_index)
 
     @contextmanager
