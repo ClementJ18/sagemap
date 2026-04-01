@@ -71,6 +71,7 @@ class ScriptArgumentType(IntEnum):
     HERO = 62
     EMOTION = 63
     UNKNOWN_1 = 64
+    EVA = 76
     OBJECTIVE_COMPLETE = 77
 
 
