@@ -1,5 +1,11 @@
 from .asset_list import AssetList
-from .blend_tile_data import BlendTileData
+from .blend_tile_data import (
+    BlendDescription,
+    BlendDirection,
+    BlendTileData,
+    BlendTileTexture,
+    TileFlammability,
+)
 from .camera_animation_list import CameraAnimationList
 from .castle_templates import CastleTemplates
 from .environment_data import EnvironmentData
@@ -33,6 +39,10 @@ __all__ = [
     "HeightMapData",
     "WorldInfo",
     "BlendTileData",
+    "BlendTileTexture",
+    "BlendDescription",
+    "BlendDirection",
+    "TileFlammability",
     "GlobalVersion",
     "SkippedAsset",
     "WaypointsList",

@@ -7,6 +7,15 @@ if TYPE_CHECKING:
     from .height_map import HeightMapData
 
 
+class BlendDirection(IntEnum):
+    """Direction of a texture blend transition."""
+
+    RIGHT_TO_LEFT = 0
+    LEFT_TO_RIGHT = 1
+    TOP_TO_BOTTOM = 2
+    BOTTOM_TO_TOP = 3
+
+
 class TileFlammability(IntEnum):
     """Enum for tile flammability values."""
 
@@ -68,6 +77,14 @@ class BlendDescription:
     flags: int
     two_sided: bool
     magic_value1: int
+
+    @property
+    def blend_direction(self) -> BlendDirection:
+        """Decode the blend direction from raw_blend_direction and flags."""
+        if self.raw_blend_direction[0]:  # X axis
+            return BlendDirection.LEFT_TO_RIGHT if self.flags & 1 else BlendDirection.RIGHT_TO_LEFT
+        else:  # Y axis
+            return BlendDirection.BOTTOM_TO_TOP if self.flags & 1 else BlendDirection.TOP_TO_BOTTOM
 
     @classmethod
     def parse(cls, context: "ParsingContext", version: int):
